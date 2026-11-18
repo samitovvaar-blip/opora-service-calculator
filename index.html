@@ -195,7 +195,8 @@ td:last-child { padding-inline-start: 8px; text-align: right; font-variant-numer
 td > details { margin: 0; }
 .tot td { border-bottom: 0; padding-top: 10px; font-weight: 750; }
 .sec td { padding: 7px 9px; border: 0; background: var(--acc2); color: var(--acc); font-size: 12px; font-weight: 750; }
-.sec.sb td { background: #e6f4eb; color: var(--ok); }
+.sec.sb td { background: #ffecd8; color: #783b10; }
+.sec.sd td { background: #e6f4eb; color: var(--ok); }
 .settings { margin-top: 18px; }
 .set { display: grid; grid-template-columns: minmax(0, 1fr) minmax(65px, 110px); align-items: center; gap: 8px 12px; margin-top: 14px; font-size: 13px; }
 .doc { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: clamp(14px, 3vw, 26px); margin-top: 14px; }
@@ -416,7 +417,7 @@ td > details { margin: 0; }
   <!-- ПАКЕТЫ -->
   <div id="t-pack" class="hide">
     <div class="card" style="margin:0 0 14px"><label style="margin-top:0">Бухгалтерия клиента</label><select id="p_acc"><option value="our">Бухгалтерию ведём мы (по расчёту клиента из вкладки «Бухгалтерия»)</option><option value="own">Бухгалтерия не нужна — только управленка</option></select>
-      <div class="note">Пакет — это управленческий учёт. Цифры: базовый управленческий учёт. Контроль: всё из Цифр, а также бюджет и план-факт, второй созвон со мной и товарный учёт (всего 2 созвона со мной в месяц). Бухгалтерия прибавляется отдельно по расчёту клиента.</div></div>
+      <div class="note">Пакет — это управленческий учёт. Цифры: базовый управленческий учёт. Контроль: всё из Цифр, а также бюджет и план-факт, второй созвон со мной и товарный учёт (всего 2 созвона со мной в месяц). Бухгалтерия добавляется по расчёту клиента. Скидка применяется к общей месячной стоимости пакета.</div></div>
     <div class="grid">
       <div class="card" id="pk1"></div>
       <div class="card" id="pk2"></div>
@@ -670,7 +671,7 @@ const DEF = {
   add_vat:4000, add_vat_usn:3000, add_vat_mix:5000, add_ved:8000, add_wh:3000, add_wh_serv:3000, add_wh_mix:6000, add_kkt:2000, add_mp:3000, one_c:5000, c1_b1:30, c1_b2:100, c1_b3:150, c1_t1:2000, c1_t2:3000, c1_t3:4000, c1_t4:5000,
   lvl_light:15000, lvl_std:25000, spread:10,
   i_dds:15000, i_ost:5000, i_call:7000, i_chat:0, i_app:3000, i_hour_online:2500, i_plan:10000, i_call2:7000, i_goods:6000, i_hour:3500, i_hour_staff:2000,
-  pk_disc:0,
+  pk_disc:10,
   n1:3500, n3:8100, n6:15000, n12:20400,
   au_k1:15000, au_system:10000, ny_me:3500, ny_staff:2000, i_tbl:2000, i_office:2000, au_rush:30
 };
@@ -693,6 +694,7 @@ try {
     if (!rates.goodsCostingRateUpdated && rates.add_wh === 4000) rates.add_wh = DEF.add_wh;
     if (!rates.managementReportsRateUpdated && rates.i_dds === 10000) rates.i_dds = DEF.i_dds;
     if (!rates.currentAuditRateUpdated && rates.au_k1 === 10000) rates.au_k1 = DEF.au_k1;
+    if (!rates.packageDiscountUpdated && rates.pk_disc === 0) rates.pk_disc = DEF.pk_disc;
     S = {...DEF, ...rates};
   }
 } catch (e) {}
@@ -822,7 +824,14 @@ function renderBuh(){
 
 const MG=[["dds","ДДС и ОПиУ каждый месяц","i_dds"],["ost","Платёжный календарь","i_ost"],["call","Созвон или личная встреча со мной: отчёт владельцу и рекомендации (2 часа в месяц)","i_call"],["plan","Бюджет и план-факт","i_plan"],["call2","Второй созвон или встреча со мной в месяц (2 часа)","i_call2"],["goods","Товарный учёт","i_goods"],["app","Доступ к приложению и боту НЕЙЛА","i_app"]];
 const PK1=["dds","ost","call","app"], PK2=["dds","ost","call","app","plan","call2","goods"];
-function pkg(keys){const items=MG.filter(x=>keys.includes(x[0])).map(x=>[x[1],S[x[2]]]);const sep=items.reduce((a,x)=>a+x[1],0);const price=r500(sep*(1-S.pk_disc/100));return {items,sep,price,disc:sep-price}}
+function calcPackage(keys, accounting) {
+  const items = MG.filter(service => keys.includes(service[0])).map(([, name, rate]) => [name, S[rate]]);
+  const management = items.reduce((total, [, amount]) => total + amount, S.i_chat);
+  const subtotal = management + accounting;
+  const discountRate = Math.min(100, Math.max(0, S.pk_disc));
+  const discount = Math.round(subtotal * discountRate / 100);
+  return {items, management, subtotal, discountRate, discount, total: subtotal - discount};
+}
 const MG_BASE=["dds","ost","call","app"], MG_ADD=["plan","call2","goods"];
 $("m_base").innerHTML=MG.filter(x=>MG_BASE.includes(x[0])).map(x=>`<div class="chk" style="margin:6px 0"><span style="color:var(--ok)">✓</span><span id="ml_${x[0]}"></span></div>`).join("");
 $("m_list").innerHTML=MG.filter(x=>MG_ADD.includes(x[0])).map(x=>`<div class="chk"><input type="checkbox" id="m_${x[0]}"><label style="margin:0;color:inherit" id="ml_${x[0]}"></label></div>`).join("");
@@ -870,32 +879,42 @@ function renderMgmt(){
    if ($("m_office").checked) R.push(["Сборка цифрового офиса", "документы и таблицы всех отделов собраны и структурированы (разово)"]);
    $("m_res").innerHTML=resHTML(R,"Что является результатом работы:")}
 }
-function packCard(el,name,keys,c){
-  const acc=$("p_acc").value==="our", pk=pkg(keys), base1=PK1;
-  const t=[["УПРАВЛЕНЧЕСКИЙ УЧЁТ — входит в пакет","","sec sm"]];
-  MG.filter(x=>PK1.includes(x[0])).forEach(x=>t.push([c1wrap(x[1]),rub(S[x[2]])]));
-  MG.filter(x=>keys.includes(x[0])&&!PK1.includes(x[0])).forEach(x=>t.push([c1wrap(x[1]),rub(S[x[2]])]));
-  t.push(["Бесплатно",""]);
-  t.push(freeRow("Вопросы и коммуникация в чате",S.i_chat));
-  if(!acc)t.push(["Коммуникация с текущей бухгалтерией","бесплатно"]);
-  if(pk.disc>0){t.push(["Сумма услуг по отдельности",rub(pk.sep),"tot"]);t.push([`Скидка за пакет (${S.pk_disc}%)`,"−"+rub(pk.disc)])}
-  t.push([`Итого управленческий учёт — цена пакета ${name}`,rub(pk.price),"tot"]);
-  let total=pk.price;
-  if(acc){
-    const det=c.items.filter(x=>!x[0].startsWith("Расчёт заработной платы")&&x[1]!=="").map(x=>`<div style="display:flex;justify-content:space-between;gap:10px;font-size:13px;color:var(--mut);padding:2px 0 2px 14px"><span>${c1wrap(x[0])}</span><span>${x[1]}</span></div>`).join("");
-    const buhV=Math.max(0,c.m-c.pay);
-    t.push(["БУХГАЛТЕРИЯ — по расчёту клиента (вкладка «Бухгалтерия»)","","sec sb"],[`<details><summary style="cursor:pointer">Бухгалтерия, налоги, отчётность ▾</summary>${det}</details>`,rub(buhV)]);
-    if(c.pay>0)t.push([`Зарплата и кадры: ${plEmp(c.emp)} (1 чел. — ${rub(S.emp_rate)})`,rub(c.pay)]);
-    t.push(["Итого бухгалтерия",rub(c.m),"tot"]);
-    total+=c.m;
-  }else t.push(["БУХГАЛТЕРИЯ — не нужна","","sec sb"]);
-  taxRows(total,acc?"Итого в месяц (пакет + бухгалтерия)":"Итого в месяц").forEach(r=>t.push(r));
-  el.innerHTML=`<h2>${name}</h2><div class="big">${bigPrice(total," / мес")}</div><table style="margin-top:12px">${rows(t)}</table><div class="note">${acc&&c.over?`Внимание: операций больше ${S.ops_max} в месяц, бухгалтерию нужно считать индивидуально. `:""}Для постов: ≈ ${rub(total/30)} в день.</div>`;
+function accountingCallLabel(c) {
+  return `Созвон ${whoTxt(c.staff,c.online)}: ${c.callH} ч в месяц`;
 }
-function renderPack(){
-  const c=calcBuh();
-  packCard($("pk1"),"ОПОРА-Цифры",PK1,c);
-  packCard($("pk2"),"ОПОРА-Контроль",PK2,c);
+
+function packCard(el, name, keys, c, acc) {
+  const accounting = acc ? accountingMonthly(c) : 0;
+  const pack = calcPackage(keys, accounting);
+  const t = [["Управленческий учёт", "", "sec sm"]];
+  t.push(...pack.items.map(([label, amount]) => [c1wrap(label), rub(amount)]));
+  t.push(freeRow("Вопросы и коммуникация в чате", S.i_chat));
+  if (!acc) t.push(["Коммуникация с текущей бухгалтерией", "бесплатно"]);
+  t.push(["Итого управленческий учёт", rub(pack.management), "tot"]);
+
+  if (acc) {
+    const detail = c.items.filter(row => !row[0].startsWith("Расчёт заработной платы") && row[1] !== "")
+      .map(([label, value]) => `<div style="display:flex;justify-content:space-between;gap:10px;font-size:13px;color:var(--mut);padding:2px 0 2px 14px"><span>${c1wrap(label)}</span><span>${value}</span></div>`).join("");
+    t.push(["Бухгалтерия — стоимость по расчёту клиента", "", "sec sb"]);
+    t.push([`<details><summary>Бухгалтерия, налоги, отчётность ▾</summary>${detail}</details>`, rub(Math.max(0, c.m - c.pay))]);
+    if (c.pay > 0) t.push([`Зарплата и кадры: ${plEmp(c.emp)} (1 чел. — ${rub(S.emp_rate)})`, rub(c.pay)]);
+    t.push([accountingCallLabel(c), rub(c.callV)]);
+    t.push(["Итого бухгалтерия", rub(accounting), "tot"]);
+  }
+
+  t.push([acc ? "Управленческий учёт + бухгалтерия" : "Стоимость до скидки", rub(pack.subtotal), "tot"]);
+  t.push([`Скидка за пакет ${pack.discountRate}%`, pack.discount ? "−" + rub(pack.discount) : rub(0), "sec sd"]);
+  if (taxRate()) t.push(["Стоимость со скидкой до налоговой надбавки", rub(pack.total), "tot"]);
+  t.push(...taxRows(pack.total, "Итого со скидкой в месяц"));
+  const warning = acc && c.over ? `Внимание: операций больше ${S.ops_max} в месяц, бухгалтерию нужно считать индивидуально. ` : "";
+  el.innerHTML = `<h2>${name}</h2><div class="big">${bigPrice(pack.total," / мес")}</div><table style="margin-top:12px">${rows(t)}</table><div class="note">${warning}Для постов: ≈ ${rub(pack.total / 30)} в день.</div>`;
+}
+
+function renderPack() {
+  const c = calcBuh();
+  const acc = $("p_acc").value === "our";
+  packCard($("pk1"), "ОПОРА-Цифры", PK1, c, acc);
+  packCard($("pk2"), "ОПОРА-Контроль", PK2, c, acc);
 }
 
 function calcNeyla() {
@@ -1040,11 +1059,19 @@ function listData(){
   M.push(["Вопросы и коммуникация в чате",S.i_chat===0?"бесплатно":rub(S.i_chat),""]);
   [[1,"n1"],[3,"n3"],[6,"n6"],[12,"n12"]].forEach(x=>N.push([`Подписка на ${x[0]} мес.`,rub(S[x[1]]),`${rub(S[x[1]]/x[0])} в месяц`]));
   N.push(["Настройка шаблона и приложения","🎁 в подарок",""],["Первичный созвон, консультация (как работать с приложением, какие показатели смотреть)","🎁 в подарок",""],["Созвон раз в месяц: итоги результата месяца — со мной",rub(S.ny_me),"в месяц"],["Созвон раз в месяц: итоги результата месяца — с сотрудником",rub(S.ny_staff),"в месяц"],["Первый месяц подписки","бесплатно","для нового клиента"]);
-  [[ "ОПОРА-Цифры",PK1],["ОПОРА-Контроль",PK2]].forEach(x=>{
-    const k=pkg(x[1]), inc=MG.filter(y=>x[1].includes(y[0])).map(y=>y[1]).join("; ");
-    P.push([x[0]+" (управленческий учёт)",rub(k.price),"в месяц"],["Состав: "+inc+"; доступ к приложению и боту НЕЙЛА — 🎁 в подарок; вопросы и коммуникация в чате бесплатно. "+(k.disc>0?"Сумма услуг по отдельности "+rub(k.sep)+", скидка за пакет "+S.pk_disc+"%":"скидка за пакет не применяется"),"",""]);
-  });
-  P.push(["Бухгалтерия к пакету — отдельно, по расчёту клиента (вкладка «Бухгалтерия»)","по расчёту","в месяц"]);
+  const packageAccounting = $("p_acc").value === "our" ? accountingMonthly(calcBuh()) : 0;
+  for (const [name, keys] of [["ОПОРА-Цифры", PK1], ["ОПОРА-Контроль", PK2]]) {
+    const pack = calcPackage(keys, packageAccounting);
+    const services = pack.items.map(([label]) => label).join("; ");
+    P.push(
+      [name + " — со скидкой", rub(pack.total), "в месяц"],
+      ["Управленческий учёт", rub(pack.management), "в месяц"],
+      ["Состав: " + services, "", ""]
+    );
+    if ($("p_acc").value === "our") P.push(["Бухгалтерия — стоимость по расчёту клиента", rub(packageAccounting), "в месяц"]);
+    P.push(["Общая стоимость до скидки", rub(pack.subtotal), "в месяц"],
+      [`Скидка за пакет ${pack.discountRate}%`, pack.discount ? "−" + rub(pack.discount) : rub(0), "в месяц"]);
+  }
   A.push(
     ["Аудит текущей бухгалтерии", rub(S.au_k1), AUDIT_TERMS.current],
     ["Восстановление бухгалтерского учёта", "Месячная цена из «Бухгалтерии» × период", AUDIT_TERMS.accounting],
@@ -1076,18 +1103,33 @@ function buildSpec(){
     if(c.onec>0){r.push(R(`Заведение базы 1С (${c.ents} шт.)`,"разово",c.onec));once+=c.onec}
     return r;
   };
-  if(pk!=="none"){
-    const keys=pk==="1"?PK1:PK2, name=pk==="1"?"ОПОРА-Цифры":"ОПОРА-Контроль", K=pkg(keys), acc=$("p_acc").value==="our";
-    const rows=[];
-    MG.filter(x=>keys.includes(x[0])).forEach(x=>rows.push(R(x[1],"входит в пакет",null,`отдельно ${rub(S[x[2]])}`)));
-    rows.push(R("Вопросы и коммуникация в чате","—",null,"бесплатно"));
-    if(!acc)rows.push(R("Коммуникация с текущей бухгалтерией","—",null,"бесплатно"));
-    secs.push({t:`Пакет «${name}» (управленческий учёт)`,rows});
-    const pr=[R(`Стоимость пакета «${name}»`,"ежемесячно",K.price)];
-    monthly+=K.price;
-    if(acc){secs.push({t:"Бухгалтерское обслуживание (по расчёту)",rows:c.nums.map(x=>R(x[0],"ежемесячно",x[1]))});monthly+=c.m}
-    secs.push({t:"Стоимость",rows:pr,note:K.disc>0?`Стоимость управленческих услуг по отдельности: ${rub(K.sep)} в месяц, скидка за пакет ${S.pk_disc}%.`:""});
-    const o=accOnce();if(o.length)secs.push({t:"Разовые услуги",rows:o});
+  if (pk !== "none") {
+    const keys = pk === "1" ? PK1 : PK2;
+    const name = pk === "1" ? "ОПОРА-Цифры" : "ОПОРА-Контроль";
+    const acc = $("p_acc").value === "our";
+    const accounting = acc ? accountingMonthly(c) : 0;
+    const pack = calcPackage(keys, accounting);
+    const rows = pack.items.map(([label, amount]) => R(label, "входит в пакет", null, `отдельно ${rub(amount)}`));
+    rows.push(S.i_chat ? R("Вопросы и коммуникация в чате", "входит в пакет", null, `отдельно ${rub(S.i_chat)}`)
+      : R("Вопросы и коммуникация в чате", "—", null, "бесплатно"));
+    if (!acc) rows.push(R("Коммуникация с текущей бухгалтерией", "—", null, "бесплатно"));
+    secs.push({t: `Пакет «${name}» (управленческий учёт)`, rows});
+    if (acc) {
+      const accountingRows = c.nums.map(([label, amount]) => R(label, "ежемесячно", amount));
+      accountingRows.push(R(accountingCallLabel(c), "ежемесячно", c.callV));
+      secs.push({t:"Бухгалтерское обслуживание (по расчёту клиента)", rows: accountingRows});
+      const setup = accOnce();
+      if (setup.length) secs.push({t:"Разовые услуги", rows: setup});
+    }
+    const pricing = [R("Управленческий учёт", "ежемесячно", pack.management)];
+    if (acc) pricing.push(R("Бухгалтерия — по расчёту клиента", "ежемесячно", accounting));
+    pricing.push(
+      R("Общая стоимость до скидки", "ежемесячно", pack.subtotal),
+      R(`Скидка за пакет ${pack.discountRate}%`, "ежемесячно", -pack.discount),
+      R("Стоимость со скидкой", "ежемесячно", pack.total)
+    );
+    secs.push({t:"Стоимость пакета", rows: pricing});
+    monthly += pack.total;
   }else{
     if($("sp_b").checked){
       secs.push({t:"Бухгалтерское обслуживание",rows:c.nums.map(x=>R(x[0],"ежемесячно",x[1])).concat([R("Вопросы и коммуникация в чате","—",null,"бесплатно")],(c.callV>0&&!$("sp_m").checked)?[R(`Созвон ${whoTxt(c.staff,c.online)}: ${c.callH} ч в месяц`,"ежемесячно",c.callV)]:[])});monthly+=c.m+((c.callV>0&&!$("sp_m").checked)?c.callV:0);
@@ -1175,7 +1217,7 @@ function buildSettings(){
       if(!valid){i.reportValidity();return}
     }
     S[key]=Number.isFinite(value)?value:0;
-    try{localStorage.setItem("opora_calc",JSON.stringify({...S,neylaMonthlyRateUpdated:true,goodsCostingRateUpdated:true,managementReportsRateUpdated:true,currentAuditRateUpdated:true}))}catch(e){}
+    try{localStorage.setItem("opora_calc",JSON.stringify({...S,neylaMonthlyRateUpdated:true,goodsCostingRateUpdated:true,managementReportsRateUpdated:true,currentAuditRateUpdated:true,packageDiscountUpdated:true}))}catch(e){}
     renderAll();
   }));
 }
