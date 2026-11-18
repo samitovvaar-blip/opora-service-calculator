@@ -282,6 +282,8 @@ td > details { margin: 0; }
 }
 #worklog-save { background: var(--acc); color: white; }
 #worklog-preview { font-weight: 650; }
+.adesc ol { margin: 6px 0; padding-inline-start: 22px; }
+.adesc li + li { margin-top: 4px; }
 </style>
 </head>
 <body>
@@ -445,29 +447,54 @@ td > details { margin: 0; }
   <div id="t-audit" class="grid hide">
     <div class="card">
       <h2>Вид аудита</h2>
-      <div class="chk"><input type="checkbox" id="a_k1" checked><label style="margin:0;color:inherit">Коммуникация с текущей бухгалтерией</label></div>
-      <details class="adesc"><summary>Что это</summary><div>Работа с вашей текущей бухгалтерией: анализ основной базы 1С, анализ базы ЗУП, рекомендации по исправлению ошибок и регламент работы по закрытию месяца.</div></details>
-      <div class="chk"><input type="checkbox" id="a_k2"><label style="margin:0;color:inherit">Аудит учёта за период</label></div>
-      <details class="adesc"><summary>Что это</summary><div>Проверяю <b>только учёт</b> за выбранный период: правильно ли отражены операции, есть ли первичные документы, верно ли посчитаны налоги и заполнена отчётность. Результат — перечень ошибок, рисков и что исправить. Отвечает на вопрос: «правильно ли ведётся учёт?»</div></details>
-      <div class="chk"><input type="checkbox" id="a_k3"><label style="margin:0;color:inherit">Финансовый аудит бизнеса</label></div>
-      <details class="adesc"><summary>Что это</summary><div>Шире, чем аудит учёта: включает проверку учёта <b>и</b> разбор финансов бизнеса целиком — деньги (ДДС), прибыль (ОПиУ), дебиторка и кредиторка, кассовые разрывы, структура расходов, налоговая нагрузка. Результат — картина состояния бизнеса и рекомендации. Отвечает на вопрос: «как на самом деле обстоят дела в бизнесе?»</div></details>
-      <h2 style="margin-top:16px">Объём</h2>
-      <div class="row">
-        <div><label>Период, месяцев</label><input type="number" id="a_mon" value="12" min="1"></div>
-        <div><label>Операций в месяц (в аудите считаются все за период)</label><input type="number" id="a_ops" value="50" min="0"></div>
+      <div class="chk"><input type="checkbox" id="a_k1" checked><label for="a_k1" style="margin:0;color:inherit">Аудит текущей бухгалтерии</label></div>
+      <details class="adesc">
+        <summary>Что это</summary>
+        <ol>
+          <li>Анализ основной базы 1С.</li>
+          <li>Анализ базы 1С:ЗУП.</li>
+          <li>Рекомендации бухгалтерии по исправлению ошибок в обеих базах.</li>
+          <li>Регламент работы по закрытию месяца.</li>
+          <li>Созвон с бухгалтерией: разбор результатов проверки и рекомендаций.</li>
+        </ol>
+      </details>
+      <div class="chk"><input type="checkbox" id="a_k2"><label for="a_k2" style="margin:0;color:inherit">Аудит учёта за период</label></div>
+      <details class="adesc">
+        <summary>Что это</summary>
+        <ol>
+          <li>Проверка операций и первичных документов за выбранный период.</li>
+          <li>Проверка расчёта налогов и заполнения отчётности.</li>
+          <li>Перечень ошибок, рисков и необходимых исправлений.</li>
+        </ol>
+      </details>
+      <div class="chk"><input type="checkbox" id="a_k3"><label for="a_k3" style="margin:0;color:inherit">Финансовый аудит бизнеса</label></div>
+      <details class="adesc">
+        <summary>Что это</summary>
+        <ol>
+          <li>Проверка учёта и разбор движения денежных средств и прибыли по ДДС и ОПиУ.</li>
+          <li>Анализ задолженности, кассовых разрывов, структуры расходов и налоговой нагрузки.</li>
+          <li>Выводы о финансовом состоянии бизнеса и рекомендации.</li>
+        </ol>
+      </details>
+      <div id="a_project_options" class="hide">
+        <h2 style="margin-top:16px">Объём</h2>
+        <div class="row">
+          <div><label>Период, месяцев</label><input type="number" id="a_mon" value="12" min="1"></div>
+          <div><label>Операций в месяц (в аудите считаются все за период)</label><input type="number" id="a_ops" value="50" min="0"></div>
+        </div>
+        <div class="row">
+          <div><label>Юрлиц / ИП</label><input type="number" id="a_ent" value="1" min="1"></div>
+          <div><label>Маркетплейсов</label><input type="number" id="a_mp" value="0" min="0" max="3"></div>
+        </div>
+        <h2 style="margin-top:16px">Сложность</h2>
+        <div class="chk"><input type="checkbox" id="a_vat"><label style="margin:0;color:inherit">ОСНО / НДС</label></div>
+        <div class="chk"><input type="checkbox" id="a_ved"><label style="margin:0;color:inherit">ВЭД</label></div>
+        <div class="chk"><input type="checkbox" id="a_wh"><label style="margin:0;color:inherit">Склад / себестоимость</label></div>
+        <label id="a_tbll">Анализ прочих таблиц, штук (0 — не нужно)</label><input type="number" id="a_tblc" value="0" min="0">
+        <div class="chk"><input type="checkbox" id="a_rep" checked><label style="margin:0;color:inherit">Отчёт с выводами и рекомендациями</label></div>
+        <div class="chk"><input type="checkbox" id="a_rush"><label style="margin:0;color:inherit" id="a_rushl">Срочно</label></div>
+        <div class="note" id="a_rushn"></div>
       </div>
-      <div class="row">
-        <div><label>Юрлиц / ИП</label><input type="number" id="a_ent" value="1" min="1"></div>
-        <div><label>Маркетплейсов</label><input type="number" id="a_mp" value="0" min="0" max="3"></div>
-      </div>
-      <h2 style="margin-top:16px">Сложность</h2>
-      <div class="chk"><input type="checkbox" id="a_vat"><label style="margin:0;color:inherit">ОСНО / НДС</label></div>
-      <div class="chk"><input type="checkbox" id="a_ved"><label style="margin:0;color:inherit">ВЭД</label></div>
-      <div class="chk"><input type="checkbox" id="a_wh"><label style="margin:0;color:inherit">Склад / себестоимость</label></div>
-      <label id="a_tbll">Анализ прочих таблиц, штук (0 — не нужно)</label><input type="number" id="a_tblc" value="0" min="0">
-      <div class="chk"><input type="checkbox" id="a_rep" checked><label style="margin:0;color:inherit">Отчёт с выводами и рекомендациями</label></div>
-      <div class="chk"><input type="checkbox" id="a_rush"><label style="margin:0;color:inherit" id="a_rushl">Срочно</label></div>
-      <div class="note" id="a_rushn"></div>
     </div>
     <div class="card">
       <h2>Стоимость аудита</h2>
@@ -639,7 +666,7 @@ const DEF = {
   i_dds:15000, i_ost:5000, i_call:7000, i_chat:0, i_app:3000, i_hour_online:2500, i_plan:10000, i_call2:7000, i_goods:6000, i_hour:3500, i_hour_staff:2000,
   pk_disc:0,
   n1:3500, n3:8100, n6:15000, n12:20400,
-  au_k1:10000, au_k2:15000, au_k3:20000, au_mon_free:3, au_mon:1500, au_ops_free:150, au_ops:15, au_ent:5000,
+  au_k1:15000, au_k2:15000, au_k3:20000, au_mon_free:3, au_mon:1500, au_ops_free:150, au_ops:15, au_ent:5000,
   au_vat:4000, au_ved:6000, au_wh:4000, au_mp:2500, au_rep:3000, au_tbl:2000, ny_me:3500, ny_staff:2000, i_tbl:2000, i_office:2000, au_rush:30
 };
 const LBL = {
@@ -650,7 +677,7 @@ const LBL = {
   i_dds:"Состав: ДДС и ОПиУ каждый месяц, ₽",i_hour_staff:"Созвон или встреча с сотрудником, 1 час, ₽",i_hour_online:"Дополнительная встреча со мной онлайн, 1 час, ₽",i_ost:"Состав: контроль остатков дебиторки/кредиторки (платёжный календарь), ₽",i_call:"Созвон или встреча с отчётом владельцу и рекомендациями, 2 часа, ₽",i_chat:"Состав: вопросы и коммуникация в чате, ₽ (0 = бесплатно)",i_app:"Состав: доступ к приложению и боту НЕЙЛА, ₽",i_plan:"Контроль: бюджет и план-факт, ₽",i_call2:"Контроль: второй созвон в месяц (2 часа), ₽",i_hour:"Дополнительный час созвона или встречи, ₽",i_goods:"Доп к управленке: товарный учёт, ₽",
   pk_disc:"Скидка за пакет (Цифры, Контроль) от суммы услуг, %",
   n1:"НЕЙЛА 1 мес, ₽",n3:"НЕЙЛА 3 мес, ₽",n6:"НЕЙЛА 6 мес, ₽",n12:"НЕЙЛА 12 мес, ₽",
-  au_k1:"Аудит: коммуникация с текущей бухгалтерией, база ₽",au_k2:"Аудит: учёт за период, база ₽",au_k3:"Аудит: финансовый аудит бизнеса, база ₽",
+  au_k1:"Аудит текущей бухгалтерии, фиксированная цена, ₽",au_k2:"Аудит: учёт за период, база ₽",au_k3:"Аудит: финансовый аудит бизнеса, база ₽",
   au_mon_free:"Аудит: месяцев включено в базу",au_mon:"Аудит: за каждый месяц сверх, ₽",au_ops_free:"Аудит: операций за весь период включено в базу",au_ops:"Аудит: за каждую операцию сверх (за весь период), ₽",au_ent:"Аудит: за каждое доп. юрлицо/ИП, ₽",
   au_vat:"Аудит: ОСНО/НДС, ₽",au_ved:"Аудит: ВЭД, ₽",au_wh:"Аудит: склад/себестоимость, ₽",au_mp:"Аудит: за маркетплейс, ₽",au_rep:"Аудит: отчёт с выводами, ₽",ny_me:"НЕЙЛА: ежемесячный созвон со мной, ₽",ny_staff:"НЕЙЛА: ежемесячный созвон с сотрудником, ₽",au_tbl:"Аудит: анализ прочих таблиц, за одну таблицу, ₽",i_tbl:"Таблицы (создание/проверка/анализ), за одну, ₽",i_office:"Сборка цифрового офиса, ₽",au_rush:"Аудит: наценка за срочность, %"
 };
@@ -662,6 +689,7 @@ try {
     if (!rates.neylaMonthlyRateUpdated && rates.n1 === 3000) rates.n1 = DEF.n1;
     if (!rates.goodsCostingRateUpdated && rates.add_wh === 4000) rates.add_wh = DEF.add_wh;
     if (!rates.managementReportsRateUpdated && rates.i_dds === 10000) rates.i_dds = DEF.i_dds;
+    if (!rates.currentAuditRateUpdated && rates.au_k1 === 10000) rates.au_k1 = DEF.au_k1;
     S = {...DEF, ...rates};
   }
 } catch (e) {}
@@ -910,10 +938,12 @@ function renderNeyla() {
 function calcAudit(){
   const mon=Math.max(1,num("a_mon")), ops=num("a_ops"), ent=Math.max(1,num("a_ent")), mp=num("a_mp");
   const L=[]; let sum=0; const add=(n,v)=>{if(v>0){L.push([n,v]);sum+=v}};
-  if($("a_k1").checked)add("Коммуникация с текущей бухгалтерией",S.au_k1);
+  const hasProject = $("a_k2").checked || $("a_k3").checked;
   if($("a_k2").checked)add("Аудит учёта за период",S.au_k2);
   if($("a_k3").checked)add("Финансовый аудит бизнеса",S.au_k3);
-  if(sum===0)return {L:[],m:0};
+  const fixed = $("a_k1").checked ? S.au_k1 : 0;
+  const fixedRow = fixed > 0 ? [["Аудит текущей бухгалтерии", fixed]] : [];
+  if (!hasProject || sum === 0) return {L: fixedRow, m: Math.round(fixed), fixed, project: 0, hasProject};
   add(`Период ${mon} мес. (сверх ${S.au_mon_free})`,Math.max(0,mon-S.au_mon_free)*S.au_mon);
   const total=ops*mon;
   add(`Операции за весь период: ${total} (${S.au_ops_free} входят в базу)`,Math.max(0,total-S.au_ops_free)*S.au_ops);
@@ -925,28 +955,33 @@ function calcAudit(){
   {const tb=Math.max(0,Math.round(num("a_tblc")));if(tb>0)add(`Анализ прочих таблиц: ${tb} шт. (1 таблица — ${rub(S.au_tbl)})`,tb*S.au_tbl)}
   if($("a_rep").checked)add("Отчёт с выводами и рекомендациями",S.au_rep);
   if($("a_rush").checked){const r=Math.round(sum*S.au_rush/100);L.push([`Срочность: результат за 1 неделю (+${S.au_rush}%)`,r]);sum+=r}
-  return {L,m:Math.round(sum)};
+  return {L: fixedRow.concat(L), m: Math.round(fixed + sum), fixed, project: sum, hasProject};
 }
 function renderAudit(){
   const a=calcAudit();
+  $("a_project_options").classList.toggle("hide", !a.hasProject);
   $("a_rushl").textContent=`Срочно — результат за 1 неделю (+${S.au_rush}%)`;
   $("a_rushn").textContent=`Обычный срок выполнения — 2 недели. При срочности результат готов за 1 неделю, стоимость выше на ${S.au_rush}%.`;
   if(a.m===0){$("a_res").innerHTML="";$("a_price").textContent="Выбери вид аудита";$("a_range").textContent="";$("a_tbl").innerHTML="";return}
   const t=a.L.map(x=>[x[0],rub(x[1])]); taxRows(a.m,"Итого, разово").forEach(r=>t.push(r));
   const sp=S.spread/100;
   $("a_price").innerHTML=bigPrice(a.m);
-  $("a_range").textContent=`Вилка: ${rub(gx(r500(a.m*(1-sp))))} – ${rub(gx(r500(a.m*(1+sp))))}`;
+  $("a_range").textContent = a.project
+    ? `Вилка: ${rub(gx(a.fixed + r500(a.project * (1 - sp))))} – ${rub(gx(a.fixed + r500(a.project * (1 + sp))))}`
+    : "Фиксированная стоимость";
   $("a_tbl").innerHTML=rows(t);
   {const R=[];
-   if($("a_k1").checked)R.push(["Коммуникация с текущей бухгалтерией","анализ основной базы 1С и базы ЗУП, рекомендации по исправлению ошибок, регламент работы по закрытию месяца"]);
+   if($("a_k1").checked)R.push(["Аудит текущей бухгалтерии","проверка основной базы 1С и 1С:ЗУП, письменные выводы и рекомендации, регламент закрытия месяца и созвон с бухгалтерией"]);
    if($("a_k2").checked)R.push(["Аудит учёта за период","найденные ошибки и расхождения, риски по налогам и отчётности, что исправить"]);
    if($("a_k3").checked)R.push(["Финансовый аудит бизнеса","состояние денег и прибыли (ДДС, ОПиУ), дебиторка и кредиторка, кассовые разрывы, структура расходов"]);
-   if($("a_vat").checked)R.push(["ОСНО / НДС","проверка НДС и налогового учёта на ОСНО"]);
-   if($("a_ved").checked)R.push(["ВЭД","учёт внешнеэкономических операций, курсовые разницы, таможенные платежи"]);
-   if($("a_wh").checked)R.push(["Склад и себестоимость","остатки, списание и себестоимость, расхождения учёта и склада"]);
-   if(num("a_mp")>0)R.push(["Маркетплейсы","сверка отчётов и выплат маркетплейсов с учётом"]);
-   if(num("a_tblc")>0)R.push(["Итоги анализа прочих таблиц","разбор ваших таблиц (Excel и др.): ошибки, расхождения, что привести в порядок"]);
-   if($("a_rep").checked)R.push(["Выводы и рекомендации","главные выводы и пошаговый план, что делать дальше"]);
+   if (a.project) {
+     if($("a_vat").checked)R.push(["ОСНО / НДС","проверка НДС и налогового учёта на ОСНО"]);
+     if($("a_ved").checked)R.push(["ВЭД","учёт внешнеэкономических операций, курсовые разницы, таможенные платежи"]);
+     if($("a_wh").checked)R.push(["Склад и себестоимость","остатки, списание и себестоимость, расхождения учёта и склада"]);
+     if(num("a_mp")>0)R.push(["Маркетплейсы","сверка отчётов и выплат маркетплейсов с учётом"]);
+     if(num("a_tblc")>0)R.push(["Итоги анализа прочих таблиц","разбор ваших таблиц (Excel и др.): ошибки, расхождения, что привести в порядок"]);
+     if($("a_rep").checked)R.push(["Выводы и рекомендации","главные выводы и пошаговый план, что делать дальше"]);
+   }
    $("a_res").innerHTML=resHTML(R,"Результат аудита — <b>отчёт</b>, в котором есть разделы:")}
 }
 function renderAll(){renderBuh();renderMgmt();renderPack();renderNeyla();renderAudit();renderList()}
@@ -992,7 +1027,7 @@ function listData(){
     P.push([x[0]+" (управленческий учёт)",rub(k.price),"в месяц"],["Состав: "+inc+"; доступ к приложению и боту НЕЙЛА — 🎁 в подарок; вопросы и коммуникация в чате бесплатно. "+(k.disc>0?"Сумма услуг по отдельности "+rub(k.sep)+", скидка за пакет "+S.pk_disc+"%":"скидка за пакет не применяется"),"",""]);
   });
   P.push(["Бухгалтерия к пакету — отдельно, по расчёту клиента (вкладка «Бухгалтерия»)","по расчёту","в месяц"]);
-  A.push(["Коммуникация с текущей бухгалтерией, база",rub(S.au_k1),"разово"],["Аудит учёта за период, база",rub(S.au_k2),"разово"],["Финансовый аудит бизнеса, база",rub(S.au_k3),"разово"],
+  A.push(["Аудит текущей бухгалтерии",rub(S.au_k1),"разово, фиксированно"],["Аудит учёта за период, база",rub(S.au_k2),"разово"],["Финансовый аудит бизнеса, база",rub(S.au_k3),"разово"],
    [`Период: ${S.au_mon_free} мес. входят в базу, каждый месяц сверх`,rub(S.au_mon),"разово"],
    [`Операции за весь период проверки: ${S.au_ops_free} входят в базу, каждая сверх`,rub(S.au_ops),"разово"],
    ["Каждое дополнительное юрлицо/ИП",rub(S.au_ent),"разово"],["ОСНО / НДС",rub(S.au_vat),"разово"],["ВЭД",rub(S.au_ved),"разово"],["Склад / себестоимость",rub(S.au_wh),"разово"],
@@ -1116,7 +1151,7 @@ function buildSettings(){
       if(!valid){i.reportValidity();return}
     }
     S[key]=Number.isFinite(value)?value:0;
-    try{localStorage.setItem("opora_calc",JSON.stringify({...S,neylaMonthlyRateUpdated:true,goodsCostingRateUpdated:true,managementReportsRateUpdated:true}))}catch(e){}
+    try{localStorage.setItem("opora_calc",JSON.stringify({...S,neylaMonthlyRateUpdated:true,goodsCostingRateUpdated:true,managementReportsRateUpdated:true,currentAuditRateUpdated:true}))}catch(e){}
     renderAll();
   }));
 }
