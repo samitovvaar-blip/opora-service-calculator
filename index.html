@@ -228,6 +228,27 @@ td > details { margin: 0; }
   .side, .page-header, details, .noprint { display: none !important; }
   .doc { border: 0; padding: 0; margin: 0; }
 }
+
+.document-tools { margin-top: 16px; }
+.document-markers { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 0; }
+.document-markers code { padding: 3px 7px; border-radius: 6px; background: var(--acc2); color: var(--acc); }
+.document-template {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 0 12px;
+  padding-top: 12px;
+  margin-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.document-template h3 { grid-column: 1 / -1; margin: 0; font-size: 15px; }
+.document-template input { max-width: 100%; min-width: 0; color: var(--mut); font-size: 13px; }
+.document-template .document-status { grid-column: 1 / -1; min-height: 1.5em; }
+.document-template button:disabled { opacity: .55; cursor: default; }
+@media (max-width: 540px) {
+  .document-template { grid-template-columns: minmax(0, 1fr); }
+  .document-template button { justify-self: start; }
+}
 </style>
 </head>
 <body>
@@ -439,12 +460,12 @@ td > details { margin: 0; }
     <div class="card noprint">
       <h2>Что включить в спецификацию</h2>
       <div class="row">
-        <div><label>Клиент</label><input type="text" id="sp_client" placeholder="ИП Иванов И.И. / ООО «...»"></div>
-        <div><label>Договор №</label><input type="text" id="sp_no"></div>
+        <div><label for="sp_client">Клиент</label><input type="text" id="sp_client" placeholder="ИП Иванов И.И. / ООО «...»"></div>
+        <div><label for="sp_no">Договор №</label><input type="text" id="sp_no"></div>
       </div>
       <div class="row">
-        <div><label>Дата</label><input type="text" id="sp_date"></div>
-        <div><label>Исполнитель</label><input type="text" id="sp_exec" value="ОПОРА"></div>
+        <div><label for="sp_date">Дата</label><input type="text" id="sp_date"></div>
+        <div><label for="sp_exec">Исполнитель</label><input type="text" id="sp_exec" value="ОПОРА"></div>
       </div>
       <label>Пакет</label>
       <select id="sp_pk"><option value="none">Без пакета (услуги по отдельности)</option><option value="1">ОПОРА-Цифры</option><option value="2">ОПОРА-Контроль</option></select>
@@ -463,6 +484,41 @@ td > details { margin: 0; }
       <div class="note" id="sp_msg"></div>
     </div>
     <div class="doc hide" id="sp_doc"></div>
+
+    <section class="card document-tools noprint" aria-labelledby="document-tools-title">
+      <h2 id="document-tools-title">Документы по шаблонам</h2>
+      <p class="note">Вставьте метки в нужные места документа Word и загрузите файл .docx. Калькулятор подставит данные из полей выше. Шаблоны сохраняются в этом браузере.</p>
+      <div class="document-markers">
+        <code>{{клиент}}</code>
+        <code>{{номер_договора}}</code>
+        <code>{{дата}}</code>
+        <code>{{исполнитель}}</code>
+      </div>
+      <div class="document-template" data-template="contract">
+        <h3>Договор</h3>
+        <label>Шаблон: договор (.docx)
+          <input type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" disabled>
+        </label>
+        <button type="button" disabled>Создать договор</button>
+        <p class="note document-status" role="status">Загружаю настройки…</p>
+      </div>
+      <div class="document-template" data-template="invoice">
+        <h3>Счёт на оплату</h3>
+        <label>Шаблон: счёт на оплату (.docx)
+          <input type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" disabled>
+        </label>
+        <button type="button" disabled>Создать счёт на оплату</button>
+        <p class="note document-status" role="status">Загружаю настройки…</p>
+      </div>
+      <div class="document-template" data-template="act">
+        <h3>Акт об оказании услуг</h3>
+        <label>Шаблон: акт об оказании услуг (.docx)
+          <input type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" disabled>
+        </label>
+        <button type="button" disabled>Создать акт об оказании услуг</button>
+        <p class="note document-status" role="status">Загружаю настройки…</p>
+      </div>
+    </section>
   </div>
 
   <details class="card settings">
@@ -927,6 +983,233 @@ function buildSettings(){
 }
 $("reset").onclick=()=>{S={...DEF};try{localStorage.removeItem("opora_calc")}catch(e){};buildSettings();renderAll()};
 buildSettings();renderAll();
+</script>
+<script>
+(() => {
+  const docxMime = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+  const fields = {
+    "клиент": "sp_client",
+    "номер_договора": "sp_no",
+    "дата": "sp_date",
+    "исполнитель": "sp_exec"
+  };
+  const marker = /\{\{\s*(клиент|номер_договора|дата|исполнитель)\s*\}\}/gu;
+  const wordParts = /^word\/(?:document|header\d+|footer\d+|footnotes|endnotes)\.xml$/;
+  const records = new Map();
+  let archiveLibrary;
+  const storage = new Promise(resolve => {
+    try {
+      const request = indexedDB.open("opora-document-templates", 1);
+      request.onupgradeneeded = () => request.result.createObjectStore("templates");
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = request.onblocked = () => resolve(null);
+    } catch {
+      resolve(null);
+    }
+  });
+
+  async function useStorage(mode, action) {
+    const db = await storage;
+    if (!db) throw new Error("Хранилище браузера недоступно.");
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction("templates", mode);
+      const request = action(transaction.objectStore("templates"));
+      transaction.oncomplete = () => resolve(request.result);
+      transaction.onabort = () => reject(transaction.error);
+    });
+  }
+
+  function loadArchiveLibrary() {
+    if (!archiveLibrary) {
+      archiveLibrary = new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js";
+        script.integrity = "sha512-XMVd28F1oH/O71fzwBnV7HucLxVwtxf26XV8P4wPk26EDxuGZ91N8bsOttmnomcCD3CS5ZMRL50H0GgOHvegtg==";
+        script.crossOrigin = "anonymous";
+        script.referrerPolicy = "no-referrer";
+        script.onload = () => resolve(window.JSZip);
+        script.onerror = () => {
+          script.remove();
+          archiveLibrary = undefined;
+          reject(new Error("Модуль Word не загрузился. Проверьте подключение и попробуйте ещё раз."));
+        };
+        document.head.append(script);
+      });
+    }
+    return archiveLibrary;
+  }
+
+  function processWordXml(text, values, found) {
+    const doc = new DOMParser().parseFromString(text, "application/xml");
+    if (doc.querySelector("parsererror") || doc.doctype) {
+      throw new Error("В шаблоне повреждена структура Word.");
+    }
+    const namespace = doc.documentElement.namespaceURI;
+    let changed = false;
+
+    for (const paragraph of doc.getElementsByTagNameNS(namespace, "p")) {
+      let joined = "";
+      const runs = [];
+      for (const node of paragraph.getElementsByTagNameNS(namespace, "t")) {
+        let owner = node.parentElement;
+        while (owner && (owner.localName !== "p" || owner.namespaceURI !== namespace)) {
+          owner = owner.parentElement;
+        }
+        if (owner !== paragraph || !node.textContent) continue;
+        const start = joined.length;
+        joined += node.textContent;
+        runs.push({ node, start, end: joined.length });
+      }
+      const matches = Array.from(joined.matchAll(marker));
+      for (const match of matches.reverse()) {
+        const key = match[1];
+        found.add(key);
+        if (!values) continue;
+        const start = match.index;
+        const end = start + match[0].length;
+        const firstIndex = runs.findIndex(run => run.end > start);
+        const first = runs[firstIndex];
+        for (let i = firstIndex; i < runs.length && runs[i].start < end; i += 1) {
+          const run = runs[i];
+          const keepBefore = run.node.textContent.slice(0, Math.max(0, start - run.start));
+          const keepAfter = run.node.textContent.slice(Math.max(0, end - run.start));
+          run.node.textContent = keepBefore + (run === first ? values[key] : "") + keepAfter;
+          run.node.setAttributeNS("http://www.w3.org/XML/1998/namespace", "xml:space", "preserve");
+        }
+        changed = true;
+      }
+    }
+    return changed ? new XMLSerializer().serializeToString(doc) : text;
+  }
+
+  async function openWord(file, values) {
+    const JSZip = await loadArchiveLibrary();
+    let archive;
+    try {
+      archive = await JSZip.loadAsync(file);
+    } catch {
+      throw new Error("Не удалось прочитать файл. Загрузите шаблон Word в формате .docx.");
+    }
+    if (!archive.file("[Content_Types].xml") || !archive.file("word/document.xml")) {
+      throw new Error("Выбранный файл не является документом Word .docx.");
+    }
+
+    const found = new Set();
+    for (const name of Object.keys(archive.files).filter(name => wordParts.test(name))) {
+      const text = await archive.file(name).async("string");
+      const output = processWordXml(text, values, found);
+      if (output !== text) archive.file(name, output);
+    }
+    if (!found.size) {
+      throw new Error("В шаблоне нет полей для подстановки. Вставьте хотя бы одну из меток, указанных выше.");
+    }
+    return { archive, found: Array.from(found) };
+  }
+
+  function downloadDocument(blob, name) {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = name;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 30000);
+  }
+
+  for (const row of document.querySelectorAll(".document-template")) {
+    const key = row.dataset.template;
+    const fileInput = row.querySelector("input");
+    const status = row.querySelector(".document-status");
+    const button = row.querySelector("button");
+    let busy = true;
+
+    const show = message => {
+      status.textContent = message;
+      button.disabled = busy || !records.has(key);
+    };
+    const shownTemplate = record => "Шаблон: " + record.name;
+    const initialize = async () => {
+      try {
+        const record = await useStorage("readonly", store => store.get(key));
+        if (record) records.set(key, record);
+      } catch {
+        // Templates can still be used in memory on this page.
+      }
+      busy = false;
+      fileInput.disabled = false;
+      show(records.has(key) ? shownTemplate(records.get(key)) : "Загрузите шаблон .docx.");
+    };
+    initialize();
+
+    fileInput.addEventListener("change", async () => {
+      const file = fileInput.files[0];
+      fileInput.value = "";
+      if (!file) return;
+      busy = true;
+      fileInput.disabled = true;
+      show("Проверяю шаблон…");
+      let result;
+      try {
+        if (!/\.docx$/i.test(file.name) || file.size > 10 * 1024 * 1024) {
+          throw new Error("Выберите файл .docx размером до 10 МБ.");
+        }
+        const { found } = await openWord(file);
+        const record = { file, name: file.name, found };
+        records.set(key, record);
+        result = shownTemplate(record);
+        const missing = Object.keys(fields).filter(field => !found.includes(field));
+        if (missing.length) result += ". Меток нет: " + missing.map(field => "{{" + field + "}}").join(", ");
+        try {
+          await useStorage("readwrite", store => store.put(record, key));
+        } catch {
+          result += ". Шаблон доступен до закрытия страницы.";
+        }
+      } catch (error) {
+        result = error.message;
+        if (records.has(key)) result += " Сохранён прежний шаблон.";
+      } finally {
+        busy = false;
+        fileInput.disabled = false;
+        show(result);
+      }
+    });
+
+    button.addEventListener("click", async () => {
+      const record = records.get(key);
+      if (!record || busy) return;
+      const values = Object.fromEntries(Object.entries(fields).map(([field, id]) => (
+        [field, document.getElementById(id).value.trim()]
+      )));
+      const empty = record.found.find(field => !values[field]);
+      if (empty) {
+        const field = document.getElementById(fields[empty]);
+        show("Заполните поле «" + field.labels[0].textContent + "».");
+        field.focus();
+        return;
+      }
+
+      busy = true;
+      fileInput.disabled = true;
+      show("Подготавливаю документ…");
+      let result;
+      try {
+        const { archive } = await openWord(record.file, values);
+        const blob = await archive.generateAsync({ type: "blob", mimeType: docxMime, compression: "DEFLATE" });
+        const suffix = (values["номер_договора"] || values["клиент"]).replace(/[\\/:*?"<>|]+/g, "-").slice(0, 80);
+        const name = row.querySelector("h3").textContent + (suffix ? " — " + suffix : "") + ".docx";
+        downloadDocument(blob, name);
+        result = "Документ скачан. " + shownTemplate(record);
+      } catch (error) {
+        result = error.message || "Не удалось подготовить документ. Попробуйте ещё раз.";
+      } finally {
+        busy = false;
+        fileInput.disabled = false;
+        show(result);
+      }
+    });
+  }
+})();
 </script>
 </body>
 </html>
