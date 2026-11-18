@@ -261,6 +261,27 @@ td > details { margin: 0; }
   .document-template { grid-template-columns: minmax(0, 1fr); }
   .document-template button { justify-self: start; }
 }
+.time-grid { margin-bottom: 16px; }
+.worklog-history { margin-bottom: 16px; }
+.worklog-scroll { overflow-x: auto; }
+.worklog-scroll table { min-width: 590px; }
+.worklog-table { margin-top: 12px; }
+.worklog-table th { text-align: left; color: var(--mut); font-size: 12px; }
+.worklog-table th, .worklog-table td { padding: 7px; }
+.worklog-table td:last-child { text-align: left; }
+.worklog-table button { margin: 0 4px 3px 0; padding: 4px 8px; font-size: 12px; }
+#worklog-date {
+  width: 100%;
+  min-width: 0;
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 1px solid #d5ddea;
+  border-radius: 10px;
+  background: #fafbfe;
+  color: var(--ink);
+}
+#worklog-save { background: var(--acc); color: white; }
+#worklog-preview { font-weight: 650; }
 </style>
 </head>
 <body>
@@ -281,6 +302,7 @@ td > details { margin: 0; }
         <button type="button" class="tab" data-t="pack" aria-controls="t-pack" aria-pressed="false">Пакеты</button>
         <button type="button" class="tab" data-t="list" aria-controls="t-list" aria-pressed="false">Перечень всех услуг</button>
         <button type="button" class="tab" data-t="spec" aria-controls="t-spec" aria-pressed="false">Спецификация</button>
+        <button type="button" class="tab" data-t="time" aria-controls="t-time" aria-pressed="false">Рабочее время</button>
       </div>
     </nav>
     <div class="side-links">
@@ -544,6 +566,62 @@ td > details { margin: 0; }
     </section>
   </div>
 
+  <section id="t-time" class="hide noprint" aria-label="Рабочее время">
+    <div class="grid time-grid">
+      <form id="worklog-form" class="card">
+        <h2>Рабочее время</h2>
+        <p class="note">Одна запись — одна оплачиваемая услуга за заказ или месяц. Добавляйте новые часы в ту же запись, чтобы сумма учитывалась один раз.</p>
+        <label for="worklog-service">Услуга</label>
+        <select id="worklog-service" required></select>
+        <div id="worklog-custom" class="hide">
+          <label for="worklog-name">Название услуги</label>
+          <input type="text" id="worklog-name" maxlength="100">
+        </div>
+        <label for="worklog-detail">Клиент или комментарий</label>
+        <input type="text" id="worklog-detail" maxlength="160" placeholder="Например, Касса за ноябрь · 2 ошибки">
+        <div class="row">
+          <div>
+            <label for="worklog-date">Дата</label>
+            <input type="date" id="worklog-date" required>
+          </div>
+          <div>
+            <label for="worklog-amount">Сумма за услугу, ₽</label>
+            <input type="number" id="worklog-amount" min="0" max="1000000000" step="0.01" required>
+          </div>
+        </div>
+        <p id="worklog-tariff" class="note"></p>
+        <div class="row">
+          <div><label for="worklog-hours">Часы работы</label><input id="worklog-hours" type="number" value="0" min="0" max="10000" step="1" required></div>
+          <div><label for="worklog-minutes">Минуты работы</label><input id="worklog-minutes" type="number" value="0" min="0" max="59" step="1" required></div>
+        </div>
+        <p id="worklog-preview" class="note"></p>
+        <button type="submit" id="worklog-save">Добавить запись</button>
+        <button type="button" id="worklog-cancel" class="hide">Отмена</button>
+        <p id="worklog-status" class="note" role="status">Данные хранятся в этом браузере.</p>
+      </form>
+      <div class="card">
+        <h2>Фактическая выручка за час</h2>
+        <div class="big" id="worklog-rate">—</div>
+        <p id="worklog-totals" class="note"></p>
+        <p class="note">Сумма по записям ÷ фактические часы. Расходы команды и налоги здесь не вычитаются.</p>
+        <table class="worklog-table" id="worklog-summary" hidden>
+          <thead><tr><th scope="col">Услуга</th><th scope="col">Время</th><th scope="col">Выручка за час</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card worklog-history">
+      <h2>Журнал работ</h2>
+      <p id="worklog-empty" class="note">Добавьте первую запись, чтобы увидеть историю.</p>
+      <div class="worklog-scroll" id="worklog-history" hidden>
+        <table class="worklog-table">
+          <thead><tr><th scope="col">Дата</th><th scope="col">Услуга</th><th scope="col">Время</th><th scope="col">Сумма</th><th scope="col">Выручка за час</th><th scope="col">Запись</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
   <details class="card settings">
     <summary>Настройки (цены и коэффициенты)</summary>
     <div class="set" id="settings"></div>
@@ -556,7 +634,7 @@ td > details { margin: 0; }
 const DEF = {
   base_npd:5000, base_patent:5000, base_ausn8:6000, base_ausn15:8000, base_usn6:7000, base_usn15:9000, base_osno:15000,
   add_ooo:3000, ops_free:30, ops_rate:50, ops_max:150, emp_rate:800, grp_next:80, tax_ip:6, tax_fl:4,
-  add_vat:4000, add_vat_usn:3000, add_vat_mix:5000, add_ved:8000, add_wh:4000, add_wh_serv:3000, add_wh_mix:6000, add_kkt:2000, add_mp:3000, back_lo:80, back_hi:130, back_min:5000, one_c:5000, c1_b1:30, c1_b2:100, c1_b3:150, c1_t1:2000, c1_t2:3000, c1_t3:4000, c1_t4:5000,
+  add_vat:4000, add_vat_usn:3000, add_vat_mix:5000, add_ved:8000, add_wh:3000, add_wh_serv:3000, add_wh_mix:6000, add_kkt:2000, add_mp:3000, back_lo:80, back_hi:130, back_min:5000, one_c:5000, c1_b1:30, c1_b2:100, c1_b3:150, c1_t1:2000, c1_t2:3000, c1_t3:4000, c1_t4:5000,
   lvl_light:15000, lvl_std:25000, spread:10,
   i_dds:10000, i_ost:5000, i_call:7000, i_chat:0, i_app:3000, i_hour_online:2500, i_plan:10000, i_call2:7000, i_goods:6000, i_hour:3500, i_hour_staff:2000, i_rep:5000,
   pk_disc:0,
@@ -582,6 +660,7 @@ try {
   if (saved) {
     const rates = JSON.parse(saved);
     if (!rates.neylaMonthlyRateUpdated && rates.n1 === 3000) rates.n1 = DEF.n1;
+    if (!rates.goodsCostingRateUpdated && rates.add_wh === 4000) rates.add_wh = DEF.add_wh;
     S = {...DEF, ...rates};
   }
 } catch (e) {}
@@ -1020,9 +1099,9 @@ document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
     x.classList.toggle("on",x===t);
     x.setAttribute("aria-pressed",String(x===t));
   });
-  ["buh","mgmt","neyla","pack","audit","list","spec"].forEach(k=>$("t-"+k).classList.toggle("hide",k!==t.dataset.t));
+  ["buh","mgmt","neyla","pack","audit","list","spec","time"].forEach(k=>$("t-"+k).classList.toggle("hide",k!==t.dataset.t));
 });
-document.addEventListener("input",e=>{if(!e.target.closest("#settings"))renderAll()});
+document.addEventListener("input",e=>{if(!e.target.closest("#settings, #worklog-form"))renderAll()});
 
 // настройки
 function buildSettings(){
@@ -1036,7 +1115,7 @@ function buildSettings(){
       if(!valid){i.reportValidity();return}
     }
     S[key]=Number.isFinite(value)?value:0;
-    try{localStorage.setItem("opora_calc",JSON.stringify({...S,neylaMonthlyRateUpdated:true}))}catch(e){}
+    try{localStorage.setItem("opora_calc",JSON.stringify({...S,neylaMonthlyRateUpdated:true,goodsCostingRateUpdated:true}))}catch(e){}
     renderAll();
   }));
 }
@@ -1287,6 +1366,223 @@ buildSettings();renderAll();
       }
     });
   }
+})();
+</script>
+<script>
+(() => {
+  const storageKey = "opora_work_log";
+  const groups = [
+    ["Бухгалтерия", ["add_kkt", "add_wh_serv", "add_wh", "add_wh_mix", "base_npd", "base_patent", "base_ausn8", "base_ausn15", "base_usn6", "base_usn15", "base_osno", "add_ooo", "ops_rate", "emp_rate", "add_vat", "add_vat_usn", "add_vat_mix", "add_ved", "add_mp", "one_c", "c1_t1", "c1_t2", "c1_t3", "c1_t4"]],
+    ["Управленческий учёт", ["i_dds", "i_ost", "i_call", "i_chat", "i_app", "i_plan", "i_call2", "i_goods", "i_rep", "i_hour", "i_hour_online", "i_hour_staff", "i_tbl", "i_office"]],
+    ["Аудит", ["au_k1", "au_k2", "au_k3", "au_mon", "au_ops", "au_ent", "au_vat", "au_ved", "au_wh", "au_mp", "au_rep", "au_tbl"]],
+    ["НЕЙЛА", ["n1", "n3", "n6", "n12", "ny_me", "ny_staff"]]
+  ];
+  const overrides = {
+    add_kkt: "Ведение кассы / ККТ (1 касса)",
+    i_tbl: "Создание, проверка или анализ таблицы",
+    i_office: "Сборка цифрового офиса"
+  };
+  const names = new Map();
+  const form = $("worklog-form");
+  const service = $("worklog-service");
+  const amount = $("worklog-amount");
+  const nameField = $("worklog-name");
+  const detail = $("worklog-detail");
+  const date = $("worklog-date");
+  const hours = $("worklog-hours");
+  const minutes = $("worklog-minutes");
+  const status = $("worklog-status");
+  const summary = $("worklog-summary");
+  const history = $("worklog-history");
+  const rateFormat = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0 });
+  const moneyFormat = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 2 });
+  const money = value => moneyFormat.format(value) + " ₽";
+  const hourRate = (value, duration) => rateFormat.format(value * 60 / duration) + " ₽/ч";
+  const formatTime = value => Math.floor(value / 60) + " ч " + value % 60 + " мин";
+  let editing = null;
+
+  service.add(new Option("Выберите услугу", ""));
+  for (const [title, keys] of groups) {
+    const group = document.createElement("optgroup");
+    group.label = title;
+    for (const key of keys) {
+      const name = overrides[key] ?? LBL[key].replace(/,? ₽.*$/, "");
+      names.set(key, name);
+      group.append(new Option(name, key));
+    }
+    service.append(group);
+  }
+  service.add(new Option("Другая услуга", "other"));
+
+  function readEntries() {
+    const saved = JSON.parse(localStorage.getItem(storageKey) ?? "[]");
+    if (!Array.isArray(saved)) throw new Error("Invalid work log");
+    return saved;
+  }
+
+  function update(action, message) {
+    try {
+      const entries = action(readEntries());
+      localStorage.setItem(storageKey, JSON.stringify(entries));
+      render(entries);
+      status.textContent = message;
+      return true;
+    } catch {
+      status.textContent = "Не удалось обновить журнал. Проверьте доступ к хранилищу браузера.";
+      return false;
+    }
+  }
+
+  function renderStored() {
+    try {
+      render(readEntries());
+    } catch {
+      status.textContent = "Не удалось прочитать журнал. Проверьте доступ к хранилищу браузера.";
+    }
+  }
+
+  function appendRow(body, cells) {
+    const row = body.insertRow();
+    for (const value of cells) row.insertCell().textContent = value;
+    return row;
+  }
+
+  function render(entries) {
+    const byService = new Map();
+    let totalAmount = 0;
+    let totalTime = 0;
+    const logBody = history.querySelector("tbody");
+    const summaryBody = summary.tBodies[0];
+    logBody.replaceChildren();
+    summaryBody.replaceChildren();
+
+    for (const entry of entries.toSorted((a, b) => b.date.localeCompare(a.date))) {
+      totalAmount += entry.amount;
+      totalTime += entry.minutes;
+      const key = entry.service === "other" ? "other:" + entry.name.toLowerCase() : entry.service;
+      const group = byService.get(key) ?? { name: entry.name, amount: 0, minutes: 0 };
+      group.amount += entry.amount;
+      group.minutes += entry.minutes;
+      byService.set(key, group);
+
+      const row = appendRow(logBody, [
+        entry.date.split("-").reverse().join("."),
+        entry.name,
+        formatTime(entry.minutes),
+        money(entry.amount),
+        hourRate(entry.amount, entry.minutes)
+      ]);
+      if (entry.detail) {
+        const comment = document.createElement("div");
+        comment.className = "note";
+        comment.textContent = entry.detail;
+        row.cells[1].append(comment);
+      }
+      const edit = document.createElement("button");
+      edit.type = "button";
+      edit.textContent = "Изменить";
+      edit.addEventListener("click", () => startEdit(entry));
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.textContent = "Удалить";
+      remove.addEventListener("click", () => {
+        if (!window.confirm("Удалить запись об услуге «" + entry.name + "»?")) return;
+        if (update(items => items.filter(item => item.id !== entry.id), "Запись удалена.") && editing === entry.id) {
+          resetForm();
+        }
+      });
+      row.insertCell().append(edit, remove);
+    }
+
+    for (const group of byService.values()) {
+      appendRow(summaryBody, [group.name, formatTime(group.minutes), hourRate(group.amount, group.minutes)]);
+    }
+    $("worklog-rate").textContent = totalTime ? hourRate(totalAmount, totalTime) : "—";
+    $("worklog-totals").textContent = totalTime ? `${money(totalAmount)} за ${formatTime(totalTime)}` : "";
+    $("worklog-empty").hidden = entries.length > 0;
+    summary.hidden = history.hidden = entries.length === 0;
+  }
+
+  function syncService(fillAmount) {
+    const custom = service.value === "other";
+    $("worklog-custom").classList.toggle("hide", !custom);
+    nameField.required = custom;
+    const price = S[service.value];
+    const hasPrice = names.has(service.value) && Number.isFinite(price);
+    if (fillAmount) amount.value = hasPrice ? price : "";
+    $("worklog-tariff").textContent = hasPrice
+      ? "Тариф калькулятора: " + money(price) + ". Измените сумму, если согласовали другую цену или несколько единиц."
+      : "";
+    updatePreview();
+  }
+
+  function updatePreview() {
+    const duration = hours.valueAsNumber * 60 + minutes.valueAsNumber;
+    const price = amount.valueAsNumber;
+    $("worklog-preview").textContent = duration > 0 && price >= 0
+      ? "По записи: " + hourRate(price, duration)
+      : "";
+  }
+
+  function startEdit(entry) {
+    editing = entry.id;
+    service.value = names.has(entry.service) ? entry.service : "other";
+    nameField.value = entry.name;
+    detail.value = entry.detail;
+    date.value = entry.date;
+    amount.value = entry.amount;
+    hours.value = Math.floor(entry.minutes / 60);
+    minutes.value = entry.minutes % 60;
+    $("worklog-save").textContent = "Сохранить изменения";
+    $("worklog-cancel").classList.remove("hide");
+    status.textContent = "Редактирование записи.";
+    syncService(false);
+    hours.focus();
+  }
+
+  function resetForm() {
+    editing = null;
+    form.reset();
+    date.value = new Date().toLocaleDateString("sv-SE");
+    $("worklog-save").textContent = "Добавить запись";
+    $("worklog-cancel").classList.add("hide");
+    syncService(false);
+  }
+
+  form.addEventListener("input", updatePreview);
+  service.addEventListener("change", () => syncService(true));
+  $("worklog-cancel").addEventListener("click", () => {
+    resetForm();
+    status.textContent = "Редактирование отменено.";
+  });
+  form.addEventListener("submit", event => {
+    event.preventDefault();
+    const duration = hours.valueAsNumber * 60 + minutes.valueAsNumber;
+    const itemName = service.value === "other" ? nameField.value.trim() : names.get(service.value);
+    if (!itemName || !Number.isInteger(duration) || duration < 1) {
+      status.textContent = "Укажите название услуги и фактическое время от одной минуты.";
+      return;
+    }
+
+    const entry = {
+      id: editing ?? crypto.randomUUID(),
+      service: service.value,
+      name: itemName,
+      detail: detail.value.trim(),
+      date: date.value,
+      amount: amount.valueAsNumber,
+      minutes: duration
+    };
+    const saved = update(entries => [entry, ...entries.filter(item => item.id !== entry.id)], "Запись сохранена.");
+    if (saved) resetForm();
+  });
+
+  document.querySelector('[data-t="time"]').addEventListener("click", () => syncService(false));
+  window.addEventListener("storage", event => {
+    if (event.key === storageKey || event.key === null) renderStored();
+  });
+  resetForm();
+  renderStored();
 })();
 </script>
 </body>
