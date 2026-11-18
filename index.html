@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ОПОРА — калькулятор услуг</title>
+<style>
+:root{--bg:#f5efe6;--card:#fffaf2;--ink:#2b2b2b;--mut:#7a7366;--acc:#4a90c2;--acc2:#dcebf6;--ok:#3f8f5b;--warn:#c27a1a;--line:#e5dccd}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+.wrap{max-width:1400px;margin:0 auto;padding:20px 14px 60px}
+h1{font-size:22px;margin:0 0 2px}.sub{color:var(--mut);margin-bottom:16px;font-size:13px}
+.tabs{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.trow{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.tlab{width:150px;font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.04em}
+@media(max-width:760px){.tlab{width:100%}}
+.tab{border:1px solid var(--line);background:var(--card);padding:9px 14px;border-radius:10px;cursor:pointer;font-weight:600;color:var(--mut)}
+.tab.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.grid{display:grid;grid-template-columns:1.1fr .9fr;gap:14px}
+.grid:has(.res){grid-template-columns:1fr 1fr .9fr;align-items:start}
+@media(max-width:1100px){.grid:has(.res){grid-template-columns:1.1fr .9fr}.grid:has(.res) .res{grid-column:1/-1}}
+@media(max-width:760px){.grid,.grid:has(.res){grid-template-columns:1fr}}
+.sec td{padding:8px 10px!important;font-weight:700;color:#fff;border-bottom:none!important}
+.sec.sm td{background:#4a90c2}
+.sec.sb td{background:#5f9e6e}
+.card.res{background:#f3e7cb;border-color:#dcc99c}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+.card h2{font-size:15px;margin:0 0 12px}
+label{display:block;font-size:13px;color:var(--mut);margin:10px 0 4px}
+select,input[type=number]{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;font:inherit}
+.chk{display:flex;gap:8px;align-items:center;margin:8px 0;color:var(--ink);font-size:14px}
+.chk input{width:auto}
+.row{display:flex;gap:10px}.row>div{flex:1}
+.adesc{margin:-2px 0 10px 26px;font-size:13px;color:var(--mut)}.adesc summary{cursor:pointer;color:var(--acc)}.adesc div{padding:4px 0;line-height:1.5}
+.big{font-size:30px;font-weight:700;color:var(--acc)}
+.pill{display:inline-block;padding:3px 10px;border-radius:99px;background:var(--acc2);color:#245a82;font-size:12px;font-weight:600}
+.pill.ok{background:#dff1e5;color:var(--ok)}.pill.warn{background:#fbebd2;color:var(--warn)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+td{padding:5px 0;border-bottom:1px dashed var(--line)}td:last-child{text-align:right;white-space:nowrap}
+.tot td{font-weight:700;border-bottom:none;padding-top:9px}
+.note{font-size:12px;color:var(--mut);margin-top:10px}
+details{margin-top:18px}summary{cursor:pointer;font-weight:600;color:var(--mut)}
+.set{display:grid;grid-template-columns:1fr 110px;gap:6px 10px;margin-top:10px;align-items:center}
+.set span{font-size:13px}
+button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:8px 12px;cursor:pointer;font:inherit;margin-top:10px}
+.hide{display:none}
+
+.doc{background:#fff;border:1px solid var(--line);border-radius:12px;padding:22px;margin-top:14px}
+.doc h3{margin:0 0 4px;font-size:18px}.doc .meta{color:var(--mut);font-size:13px;margin-bottom:14px}
+.doc h4{margin:16px 0 4px;font-size:14px}
+.doc table td:nth-child(2){color:var(--mut);font-size:13px;white-space:nowrap;padding:5px 12px;text-align:left}
+.lst h4{margin:18px 0 6px;font-size:15px}
+.lst table td:nth-child(2){white-space:nowrap;padding:5px 12px;text-align:right}
+.lst table td:nth-child(3){color:var(--mut);font-size:13px;text-align:left;white-space:nowrap}
+@media print{
+  body{background:#fff}
+  .wrap>h1,.wrap>.sub,.tabs,details,.noprint{display:none!important}
+  .doc{border:none;padding:0;margin:0}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>ОПОРА — калькулятор стоимости услуг</h1>
+  <div class="noprint" style="margin:0 0 10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span style="font-size:13px;color:var(--mut)">Налог на итог (кто платит):</span><select id="g_tax" style="width:auto"><option value="ip" selected>ИП или ООО</option><option value="fl">Физлицо</option><option value="none">Без налога</option></select></div>
+  <div class="sub">Внутренний инструмент. Цены ориентировочные, коэффициенты можно менять внизу в «Настройках».</div>
+  <div class="tabs">
+    <div class="trow"><span class="tlab">Услуги</span>
+      <div class="tab on" data-t="buh">Бухгалтерия</div>
+      <div class="tab" data-t="mgmt">Управленческий учёт</div>
+      <div class="tab" data-t="neyla">НЕЙЛА</div>
+      <div class="tab" data-t="audit">Аудит</div>
+    </div>
+    <div class="trow"><span class="tlab">Пакеты и документы</span>
+      <div class="tab" data-t="pack">Пакеты</div>
+      <div class="tab" data-t="list">Перечень всех услуг</div>
+      <div class="tab" data-t="spec">Спецификация</div>
+    </div>
+  </div>
+
+  <!-- БУХГАЛТЕРИЯ -->
+  <div id="t-buh" class="grid">
+    <div class="card">
+      <h2>Параметры клиента</h2>
+      <div class="row">
+        <div><label>Форма организации</label><select id="b_form"><option value="ip">ИП</option><option value="ooo">ООО</option><option value="self">Самозанятый</option><option value="group">Группа компаний</option></select></div>
+        <div id="b_regbox"><label>Режим</label><select id="b_reg"><option value="npd">НПД (самозанятый)</option><option value="patent">Патент</option><option value="ausn8">АУСН «доходы» 8%</option><option value="ausn15">АУСН «доходы−расходы» 15%</option><option value="usn6" selected>УСН «доходы»</option><option value="usn15">УСН «доходы−расходы»</option><option value="osno">ОСНО</option></select></div>
+      </div>
+      <div id="b_grp" class="hide">
+        <label>Компании группы: выбери форму и режим для каждой</label>
+        <div id="g_rows"></div>
+        <button type="button" id="g_add">+ Добавить компанию</button>
+      </div>
+      <div class="row">
+        <div><label>Операций в месяц</label><input type="number" id="b_ops" value="30" min="0"></div>
+        <div class="note" id="b_opsnote" style="margin-top:20px"></div>
+      </div>
+      <div class="row">
+        <div><label>Сотрудников</label><input type="number" id="b_emp" value="0" min="0"></div>
+        <div><label>Расчёт заработной платы</label><select id="b_pay"><option value="1">Нужен</option><option value="0">Не нужен</option></select></div>
+      </div>
+      <div class="chk"><input type="checkbox" id="b_vat"><label style="margin:0;color:inherit">НДС</label></div>
+      <div id="b_vatbox" class="hide"><label>Ставка НДС</label><select id="b_vatr"><option value="usn">5% или 7% (НДС на УСН)</option><option value="r10">10%</option><option value="r20" selected>20%</option><option value="mix">10% и 20%</option></select></div>
+      <div class="chk"><input type="checkbox" id="b_ved"><label style="margin:0;color:inherit">ВЭД</label></div>
+      <label>Себестоимость — тип бизнеса</label>
+      <select id="b_wht"><option value="serv" selected>Бизнес услуг (себестоимость услуг)</option><option value="goods">Товарный бизнес (товарный учёт ведётся)</option><option value="mix">Товары и услуги</option></select>
+      <div class="chk"><input type="checkbox" id="b_kkt"><label style="margin:0;color:inherit">Касса / ККТ</label></div>
+      <div id="b_kktbox" class="hide"><label>Сколько касс (за каждую отдельная оплата)</label><input type="number" id="b_kktn" value="1" min="1"></div>
+      <div class="chk"><input type="checkbox" id="b_mpon"><label style="margin:0;color:inherit">Маркетплейсы</label></div>
+      <div id="b_mpbox" class="hide">
+        <div class="chk"><input type="checkbox" id="b_wb"><label style="margin:0;color:inherit">Wildberries</label></div>
+        <div class="chk"><input type="checkbox" id="b_oz"><label style="margin:0;color:inherit">Ozon</label></div>
+        <div class="chk"><input type="checkbox" id="b_ym"><label style="margin:0;color:inherit">Яндекс Маркет</label></div>
+      </div>
+      <label>Созвон: кто проводит</label><select id="b_who"><option value="me">Со мной</option><option value="staff">С моим сотрудником</option></select>
+      <label>Формат встреч (со мной): офлайн или онлайн</label><select id="b_fmt"><option value="off">Офлайн</option><option value="on">Онлайн</option></select>
+      <label id="b_calll">Созвон, часов в месяц</label><input type="number" id="b_callh" value="1" min="1" step="1">
+      <div class="note" id="b_callnote"></div>
+      <h2 style="margin-top:16px">Разовые услуги (доп.)</h2>
+      <label>Таблицы: создание, проверка или анализ, штук (0 — не нужно)</label><input type="number" id="b_tblc" value="0" min="0">
+      <div class="chk"><input type="checkbox" id="b_office"><label style="margin:0;color:inherit">Сборка цифрового офиса</label></div>
+      <div class="note" id="b_extnote"></div>
+      <label>База 1С</label>
+      <select id="b_1c"><option value="yes">База 1С есть — заводить не нужно</option><option value="no">Базы нет — заводим сами (платно)</option><option value="none">База 1С не нужна</option></select>
+      <label>Разово: восстановление учёта, месяцев (0 — не нужно)</label>
+      <input type="number" id="b_back" value="0" min="0">
+    </div>
+    <div class="card">
+      <h2>Стоимость</h2>
+      <div class="big" id="b_price">—</div>
+      <div class="sub" id="b_range"></div>
+      <div id="b_level"></div>
+      <table id="b_tbl" style="margin-top:12px"></table>
+      <div class="note" id="b_day"></div>
+    </div>
+    <div class="card res"><div id="b_res"></div></div>
+  </div>
+
+  <!-- УПРАВЛЕНЧЕСКИЙ УЧЁТ -->
+  <div id="t-mgmt" class="grid hide">
+    <div class="card">
+      <h2 id="m_baseh">Всегда входит в управленческий учёт (база)</h2>
+      <div id="m_base"></div>
+      <div id="m_basegift"></div>
+      <label>Бухгалтерия клиента</label>
+      <select id="m_acc"><option value="our">Бухгалтерию ведём мы</option><option value="own">Бухгалтерия не нужна — только управленка</option></select>
+      <h2 style="margin-top:16px">Допы (можно добавить)</h2>
+      <div id="m_list"></div>
+      <label style="margin-top:6px">Созвоны и встречи: кто проводит</label><select id="m_who"><option value="me">Со мной</option><option value="staff">С моим сотрудником</option></select>
+      <label style="margin-top:6px">Формат дополнительных встреч (со мной): офлайн или онлайн</label><select id="m_fmt"><option value="off">Офлайн</option><option value="on">Онлайн</option></select>
+      <div class="row" style="margin-top:6px">
+        <div><label>Дополнительные часы созвонов или встреч</label><input type="number" id="m_hrs" value="0" min="0" step="0.5"></div>
+        <div class="note" id="m_hrsnote" style="margin-top:20px"></div>
+      </div>
+      <h2 style="margin-top:16px">Разовые услуги (доп.)</h2>
+      <label>Таблицы: создание, проверка или анализ, штук (0 — не нужно)</label><input type="number" id="m_tblc" value="0" min="0">
+      <div class="chk"><input type="checkbox" id="m_office"><label style="margin:0;color:inherit">Сборка цифрового офиса</label></div>
+      <div class="note" id="m_extnote"></div>
+      <div class="note">В подарок при управленческом учёте: чат с ответом до 1 рабочего дня, доступ к приложению, доступ к боту НЕЙЛА.</div>
+    </div>
+    <div class="card">
+      <h2>Стоимость управленческого учёта</h2>
+      <div class="big" id="m_price">—</div>
+      <table id="m_tbl" style="margin-top:12px"></table>
+      <div class="note">Цены здесь не зависят от клиента. Бухгалтерия берётся из вкладки «Бухгалтерия».</div>
+    </div>
+    <div class="card res"><div id="m_res"></div></div>
+  </div>
+
+  <!-- ПАКЕТЫ -->
+  <div id="t-pack" class="hide">
+    <div class="card" style="margin:0 0 14px"><label style="margin-top:0">Бухгалтерия клиента</label><select id="p_acc"><option value="our">Бухгалтерию ведём мы (по расчёту клиента из вкладки «Бухгалтерия»)</option><option value="own">Бухгалтерия не нужна — только управленка</option></select>
+      <div class="note">Пакет — это управленческий учёт. Цифры: базовый управленческий учёт. Контроль: всё из Цифр, а также бюджет и план-факт, второй созвон со мной и товарный учёт (всего 2 созвона со мной в месяц). Бухгалтерия прибавляется отдельно по расчёту клиента.</div></div>
+    <div class="grid" style="grid-template-columns:1fr 1fr">
+      <div class="card" id="pk1"></div>
+      <div class="card" id="pk2"></div>
+    </div>
+  </div>
+
+  <!-- НЕЙЛА -->
+  <div id="t-neyla" class="grid hide">
+    <div class="card">
+      <h2>Подписка НЕЙЛА</h2>
+      <label>Срок</label>
+      <select id="n_per"><option value="1">1 месяц</option><option value="3">3 месяца</option><option value="6">6 месяцев</option><option value="12" selected>12 месяцев</option></select>
+      <label style="margin-top:10px">Созвон раз в месяц: итоги результата месяца (доп. услуга)</label>
+      <select id="n_call"><option value="no">Не нужен</option><option value="me">Со мной</option><option value="staff">С моим сотрудником</option></select>
+      <div class="note" id="n_note"></div>
+    </div>
+    <div class="card">
+      <h2>Стоимость</h2>
+      <div class="big" id="n_price">—</div>
+      <table id="n_tbl" style="margin-top:12px"></table>
+    </div>
+    <div class="card res"><div id="n_res"></div></div>
+  </div>
+
+  <!-- АУДИТ -->
+  <div id="t-audit" class="grid hide">
+    <div class="card">
+      <h2>Вид аудита</h2>
+      <div class="chk"><input type="checkbox" id="a_k1" checked><label style="margin:0;color:inherit">Коммуникация с текущей бухгалтерией</label></div>
+      <details class="adesc"><summary>Что это</summary><div>Работа с вашей текущей бухгалтерией: анализ основной базы 1С, анализ базы ЗУП, рекомендации по исправлению ошибок и регламент работы по закрытию месяца.</div></details>
+      <div class="chk"><input type="checkbox" id="a_k2"><label style="margin:0;color:inherit">Аудит учёта за период</label></div>
+      <details class="adesc"><summary>Что это</summary><div>Проверяю <b>только учёт</b> за выбранный период: правильно ли отражены операции, есть ли первичные документы, верно ли посчитаны налоги и заполнена отчётность. Результат — перечень ошибок, рисков и что исправить. Отвечает на вопрос: «правильно ли ведётся учёт?»</div></details>
+      <div class="chk"><input type="checkbox" id="a_k3"><label style="margin:0;color:inherit">Финансовый аудит бизнеса</label></div>
+      <details class="adesc"><summary>Что это</summary><div>Шире, чем аудит учёта: включает проверку учёта <b>и</b> разбор финансов бизнеса целиком — деньги (ДДС), прибыль (ОПиУ), дебиторка и кредиторка, кассовые разрывы, структура расходов, налоговая нагрузка. Результат — картина состояния бизнеса и рекомендации. Отвечает на вопрос: «как на самом деле обстоят дела в бизнесе?»</div></details>
+      <h2 style="margin-top:16px">Объём</h2>
+      <div class="row">
+        <div><label>Период, месяцев</label><input type="number" id="a_mon" value="12" min="1"></div>
+        <div><label>Операций в месяц (в аудите считаются все за период)</label><input type="number" id="a_ops" value="50" min="0"></div>
+      </div>
+      <div class="row">
+        <div><label>Юрлиц / ИП</label><input type="number" id="a_ent" value="1" min="1"></div>
+        <div><label>Маркетплейсов</label><input type="number" id="a_mp" value="0" min="0" max="3"></div>
+      </div>
+      <h2 style="margin-top:16px">Сложность</h2>
+      <div class="chk"><input type="checkbox" id="a_vat"><label style="margin:0;color:inherit">ОСНО / НДС</label></div>
+      <div class="chk"><input type="checkbox" id="a_ved"><label style="margin:0;color:inherit">ВЭД</label></div>
+      <div class="chk"><input type="checkbox" id="a_wh"><label style="margin:0;color:inherit">Склад / себестоимость</label></div>
+      <label id="a_tbll">Анализ прочих таблиц, штук (0 — не нужно)</label><input type="number" id="a_tblc" value="0" min="0">
+      <div class="chk"><input type="checkbox" id="a_rep" checked><label style="margin:0;color:inherit">Отчёт с выводами и рекомендациями</label></div>
+      <div class="chk"><input type="checkbox" id="a_rush"><label style="margin:0;color:inherit" id="a_rushl">Срочно</label></div>
+      <div class="note" id="a_rushn"></div>
+    </div>
+    <div class="card">
+      <h2>Стоимость аудита</h2>
+      <div class="big" id="a_price">—</div>
+      <div class="sub" id="a_range"></div>
+      <table id="a_tbl" style="margin-top:12px"></table>
+      <div class="note">Разовая услуга, в стоимость пакета не засчитывается.</div>
+    </div>
+    <div class="card res"><div id="a_res"></div></div>
+  </div>
+
+  <!-- ПЕРЕЧЕНЬ -->
+  <div id="t-list" class="hide">
+    <div class="card lst">
+      <div class="noprint" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+        <h2 style="margin:0">Перечень всего: что и сколько стоит</h2>
+        <button type="button" id="l_copy" style="margin:0">Скопировать текстом (для договора)</button>
+      </div>
+      <div id="l_body"></div>
+      <div class="note" id="l_msg"></div>
+    </div>
+  </div>
+
+  <!-- СПЕЦИФИКАЦИЯ -->
+  <div id="t-spec" class="hide">
+    <div class="card noprint">
+      <h2>Что включить в спецификацию</h2>
+      <div class="row">
+        <div><label>Клиент</label><input type="text" id="sp_client" placeholder="ИП Иванов И.И. / ООО «...»" style="width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:8px;font:inherit"></div>
+        <div><label>Договор №</label><input type="text" id="sp_no" style="width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:8px;font:inherit"></div>
+      </div>
+      <div class="row">
+        <div><label>Дата</label><input type="text" id="sp_date" style="width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:8px;font:inherit"></div>
+        <div><label>Исполнитель</label><input type="text" id="sp_exec" value="ОПОРА" style="width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:8px;font:inherit"></div>
+      </div>
+      <label>Пакет</label>
+      <select id="sp_pk"><option value="none">Без пакета (услуги по отдельности)</option><option value="1">ОПОРА-Цифры</option><option value="2">ОПОРА-Контроль</option></select>
+      <div id="sp_sep">
+        <div class="chk"><input type="checkbox" id="sp_b" checked><label style="margin:0;color:inherit">Бухгалтерия (вкладка «Бухгалтерия»)</label></div>
+        <div class="chk"><input type="checkbox" id="sp_m"><label style="margin:0;color:inherit">Управленческий учёт (вкладка «Управленческий учёт»)</label></div>
+        <div class="chk"><input type="checkbox" id="sp_n"><label style="margin:0;color:inherit">НЕЙЛА (вкладка «НЕЙЛА»)</label></div>
+      </div>
+      <div class="chk"><input type="checkbox" id="sp_a"><label style="margin:0;color:inherit">Аудит (вкладка «Аудит»)</label></div>
+      <div class="note">Всё берётся из того, что выбрано на вкладках. Изменил настройки — нажми «Готово» ещё раз.</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+        <button type="button" id="sp_done" style="background:var(--acc);color:#fff;border-color:var(--acc);font-weight:600;margin:0">Готово</button>
+        <button type="button" id="sp_print" style="margin:0" class="hide">Печать / сохранить в PDF</button>
+        <button type="button" id="sp_copy" style="margin:0" class="hide">Скопировать текстом</button>
+      </div>
+      <div class="note" id="sp_msg"></div>
+    </div>
+    <div class="doc hide" id="sp_doc"></div>
+  </div>
+
+  <details>
+    <summary>Настройки (цены и коэффициенты)</summary>
+    <div class="set" id="settings"></div>
+    <button id="reset">Сбросить к исходным</button>
+  </details>
+</div>
+
+<script>
+const DEF = {
+  base_npd:5000, base_patent:5000, base_ausn8:6000, base_ausn15:8000, base_usn6:7000, base_usn15:9000, base_osno:15000,
+  add_ooo:3000, ops_free:30, ops_rate:50, ops_max:150, emp_rate:800, grp_next:80, tax_ip:6, tax_fl:4,
+  add_vat:4000, add_vat_usn:3000, add_vat_mix:5000, add_ved:8000, add_wh:4000, add_wh_serv:3000, add_wh_mix:6000, add_kkt:2000, add_mp:3000, back_lo:80, back_hi:130, back_min:5000, one_c:5000, c1_b1:30, c1_b2:100, c1_b3:150, c1_t1:2000, c1_t2:3000, c1_t3:4000, c1_t4:5000,
+  lvl_light:15000, lvl_std:25000, spread:10,
+  i_dds:10000, i_ost:5000, i_call:7000, i_chat:0, i_app:3000, i_hour_online:2500, i_plan:10000, i_call2:7000, i_goods:6000, i_hour:3500, i_hour_staff:2000, i_rep:5000,
+  pk_disc:0,
+  n1:3000, n3:8100, n6:15000, n12:20400,
+  au_k1:10000, au_k2:15000, au_k3:20000, au_mon_free:3, au_mon:1500, au_ops_free:150, au_ops:15, au_ent:5000,
+  au_vat:4000, au_ved:6000, au_wh:4000, au_mp:2500, au_rep:3000, au_tbl:2000, ny_me:3500, ny_staff:2000, i_tbl:2000, i_office:2000, au_rush:30
+};
+const LBL = {
+  base_npd:"База: НПД, ₽",base_patent:"База: патент, ₽",base_ausn8:"База: АУСН доходы 8%, ₽",base_ausn15:"База: АУСН доходы−расходы 15%, ₽",base_usn6:"База: УСН доходы, ₽",base_usn15:"База: УСН доходы−расходы, ₽",base_osno:"База: ОСНО, ₽",
+  add_ooo:"Надбавка за ООО, ₽",ops_free:"Бухгалтерия: операций в месяц включено в базу",ops_rate:"Бухгалтерия: доплата за каждую операцию сверх (в месяц), ₽",ops_max:"Предел операций (дальше индивидуально)",emp_rate:"Расчёт зарплаты: за сотрудника в месяц, ₽",grp_next:"Группа: каждая следующая компания, % от базы",tax_ip:"Налог, если платит ИП или ООО, %",tax_fl:"Налог, если платит физлицо, %",
+  add_vat:"НДС 10% или 20%, ₽",add_vat_usn:"НДС 5%/7% (на УСН), ₽",add_vat_mix:"НДС 10% и 20% вместе, ₽",add_ved:"ВЭД, ₽",add_wh:"Себестоимость: товарный бизнес, ₽",add_wh_serv:"Себестоимость: бизнес услуг, ₽",add_wh_mix:"Себестоимость: товары и услуги, ₽",add_kkt:"Касса/ККТ, за каждую кассу, ₽",add_mp:"За маркетплейс, ₽",back_lo:"Восстановление: от, % месячной цены",back_hi:"Восстановление: до, % месячной цены",back_min:"Восстановление: минимум за месяц, ₽",one_c:"1С: заведение базы, разово (за одну базу), ₽",c1_b1:"1С: граница уровня 1 (операций в месяц на базу)",c1_b2:"1С: граница уровня 2",c1_b3:"1С: граница уровня 3",c1_t1:"1С: ведение, уровень 1 (до границы 1), ₽/мес за базу",c1_t2:"1С: ведение, уровень 2, ₽/мес за базу",c1_t3:"1С: ведение, уровень 3, ₽/мес за базу",c1_t4:"1С: ведение, свыше границы 3, ₽/мес за базу",
+  lvl_light:"Граница «Лайт» до, ₽",lvl_std:"Граница «Стандарт» до, ₽",spread:"Вилка цены ±, %",
+  i_dds:"Состав: ДДС и ОПиУ каждый месяц, ₽",i_hour_staff:"Созвон или встреча с сотрудником, 1 час, ₽",i_hour_online:"Дополнительная встреча со мной онлайн, 1 час, ₽",i_ost:"Состав: контроль остатков дебиторки/кредиторки (платёжный календарь), ₽",i_call:"Состав: созвон 1 раз в месяц, ₽",i_chat:"Состав: вопросы и коммуникация в чате, ₽ (0 = бесплатно)",i_app:"Состав: доступ к приложению и боту НЕЙЛА, ₽",i_plan:"Контроль: бюджет и план-факт, ₽",i_call2:"Контроль: второй созвон в месяц (2 часа), ₽",i_hour:"Дополнительный час созвона или встречи, ₽",i_goods:"Доп к управленке: товарный учёт, ₽",i_rep:"Контроль: отчёт владельцу с выводами, ₽",
+  pk_disc:"Скидка за пакет (Цифры, Контроль) от суммы услуг, %",
+  n1:"НЕЙЛА 1 мес, ₽",n3:"НЕЙЛА 3 мес, ₽",n6:"НЕЙЛА 6 мес, ₽",n12:"НЕЙЛА 12 мес, ₽",
+  au_k1:"Аудит: коммуникация с текущей бухгалтерией, база ₽",au_k2:"Аудит: учёт за период, база ₽",au_k3:"Аудит: финансовый аудит бизнеса, база ₽",
+  au_mon_free:"Аудит: месяцев включено в базу",au_mon:"Аудит: за каждый месяц сверх, ₽",au_ops_free:"Аудит: операций за весь период включено в базу",au_ops:"Аудит: за каждую операцию сверх (за весь период), ₽",au_ent:"Аудит: за каждое доп. юрлицо/ИП, ₽",
+  au_vat:"Аудит: ОСНО/НДС, ₽",au_ved:"Аудит: ВЭД, ₽",au_wh:"Аудит: склад/себестоимость, ₽",au_mp:"Аудит: за маркетплейс, ₽",au_rep:"Аудит: отчёт с выводами, ₽",ny_me:"НЕЙЛА: ежемесячный созвон со мной, ₽",ny_staff:"НЕЙЛА: ежемесячный созвон с сотрудником, ₽",au_tbl:"Аудит: анализ прочих таблиц, за одну таблицу, ₽",i_tbl:"Таблицы (создание/проверка/анализ), за одну, ₽",i_office:"Сборка цифрового офиса, ₽",au_rush:"Аудит: наценка за срочность, %"
+};
+let S = {...DEF};
+try{const j=localStorage.getItem("opora_calc");if(j)S={...DEF,...JSON.parse(j)}}catch(e){}
+const $=id=>document.getElementById(id);
+const rub=n=>Math.round(n).toLocaleString("ru-RU").replace(/ /g," ")+" ₽";
+const r500=n=>Math.round(n/500)*500;
+const num=id=>Math.max(0,parseFloat($(id).value)||0);
+const rows=a=>a.map(r=>`<tr class="${r[2]||""}"><td>${r[0]}</td><td>${r[1]}</td></tr>`).join("");
+
+const C1_NAME="Стандартное ведение базы 1С";
+const C1_LIST=["Загрузка банковских выписок (счёт 51)","Касса (счёт 50)","Расчёты с поставщиками клиента (счета 60–62)","Если есть НДС: счёт 19 и счёт 68 (налоги)"];
+const C1_NOTE="Всё остальное, что выходит за рамки стандартного ведения, оплачивается отдельно.";
+const PC_NAME="Платёжный календарь";
+const PC_LIST=["Контроль остатков","дебиторки","кредиторки","кассовых разрывов"];
+const WRAPS=[[C1_NAME,C1_LIST,C1_NOTE,"details","; "],[PC_NAME,PC_LIST,"","inline",", "]];
+function c1wrap(n,pr){const sfx=pr?" — "+pr:"";
+  const w=WRAPS.find(x=>String(n).startsWith(x[0]));
+  if(!w)return n+sfx;
+  if(w[3]==="inline")return `${n}${sfx}<div style="font-size:13px;color:var(--mut);font-weight:400;white-space:normal;line-height:1.4">${w[1].join(", ")}</div>`;
+  return `<details style="display:inline-block;vertical-align:top"><summary style="cursor:pointer">${n} ▾</summary><div style="font-size:13px;color:var(--mut);padding:4px 0 4px 14px;white-space:normal;line-height:1.5">Что входит:<br>${w[1].map(x=>"• "+x).join("<br>")}${w[2]?"<br><i>"+w[2]+"</i>":""}</div></details>`+sfx;
+}
+function isTaxRate(value){return Number.isFinite(value)&&value>=0&&value<100}
+function taxRate(){
+  const payer=$("g_tax").value;
+  const key=payer==="ip"?"tax_ip":payer==="fl"?"tax_fl":null;
+  if(!key)return 0;
+  return isTaxRate(S[key])?S[key]:DEF[key];
+}
+function taxLabel(){return $("g_tax").value==="fl"?"плательщик: физлицо":"плательщик: ИП/ООО"}
+function grossUp(v,r){return Math.ceil(v/(1-r/100))}
+const HOURS_NOTE="График работы: с 9:00 до 18:00 по будням. В другое время бухгалтер может не отвечать; если ответит — это его личная инициатива.";
+function resHTML(R,intro){return R.length?`<h2>Результат работы</h2><div class="note" style="margin-top:0">${intro}</div><ul style="margin:6px 0 0 18px;padding:0;font-size:14px;line-height:1.5">${R.map(x=>`<li><b>${x[0]}</b> — ${x[1]}</li>`).join("")}</ul>`:""}
+function extras(x){const L=[],n=Math.max(0,Math.round(num(x+"_tblc")));
+  if(n>0)L.push([`Таблицы (создание, проверка или анализ): ${n} шт. (1 таблица — ${rub(S.i_tbl)})`,n*S.i_tbl]);
+  if($(x+"_office").checked)L.push(["Сборка цифрового офиса",S.i_office]);
+  $(x+"_extnote").textContent=`Разовые услуги, в ежемесячную стоимость не входят. Таблица — ${rub(S.i_tbl)} за создание (ведение не включено). Цифровой офис — ${rub(S.i_office)}: собираю документы и таблицы со всех отделов и структурирую.`;
+  return L}
+function extRows(L){if(!L.length)return [];const sum=L.reduce((a,x)=>a+x[1],0);return L.map(x=>["Разово: "+x[0],rub(x[1])]).concat(taxRows(sum,"Итого разово: таблицы и цифровой офис"))}
+function bigPrice(v,suf){const r=taxRate();suf=suf||"";if(!r)return rub(v)+suf;return `${rub(grossUp(v,r))}${suf} <span style="font-size:13px;font-weight:400;color:var(--mut)">услуг на ${rub(v)} без налога</span>`}
+function gx(v){const r=taxRate();return r?grossUp(v,r):v}
+function taxRows(total,lab,skipNone){const r=taxRate();if(!r)return skipNone?[]:[[lab,rub(total),"tot"]];const g=grossUp(total,r);return [[`Налог ${r}% (${taxLabel()}), включён в сумму`,rub(g-total)],[lab.startsWith("Итого")?lab.replace("Итого","Итого к оплате"):"К оплате: "+lab.charAt(0).toLowerCase()+lab.slice(1),rub(g),"tot"]]}
+function plEmp(n){const a=n%100,b=n%10;return n+" "+((a>=11&&a<=14)?"сотрудников":b===1?"сотрудник":(b>=2&&b<=4)?"сотрудника":"сотрудников")}
+function calcBuh(){
+  const ops=num("b_ops"), emp=num("b_emp"), back=num("b_back");
+  const items=[]; let sum=0;
+  const nums=[];
+  const add=(n,v)=>{if(v>0){items.push([n,rub(v)]);nums.push([n,v]);sum+=v}};
+  const form=$("b_form").value; let ents=1;
+  if(form==="group"){
+    const L=[];
+    document.querySelectorAll("#g_rows .grow").forEach(r=>{
+      const f=r.querySelector(".gf").value, g=r.querySelector(".gr");
+      const reg=f==="self"?"npd":g.value;
+      const key=f==="self"?"Самозанятый (НПД)":(f==="ip"?"ИП":"ООО")+" — "+g.selectedOptions[0].text;
+      L.push({k:key,p:S["base_"+reg]+(f==="ooo"?S.add_ooo:0)});
+    });
+    ents=Math.max(1,L.length);
+    L.sort((a,b)=>b.p-a.p);
+    const agg={};
+    L.forEach((e,i)=>{const p=i===0?e.p:e.p*S.grp_next/100;agg[e.k]=agg[e.k]||{n:0,p:0};agg[e.k].n++;agg[e.k].p+=p});
+    Object.keys(agg).forEach(k=>add(`${k} × ${agg[k].n}`,agg[k].p));
+    if(L.length>1)items.push([`(каждая следующая компания — ${S.grp_next}% от своей базы)`,""]);
+    if(L.length===0)items.push(["Добавь хотя бы одну компанию",""]);
+  }else if(form==="self"){
+    add("База (самозанятый, НПД)",S.base_npd);
+  }else{
+    add("База ("+$("b_reg").selectedOptions[0].text+")",S["base_"+$("b_reg").value]);
+    if(form==="ooo")add("ООО",S.add_ooo);
+  }
+  const opsPaid=Math.max(0,Math.min(ops,S.ops_max)-S.ops_free);
+  {const on=Math.min(ops,S.ops_max),nm=`Операции: ${on} в месяц (${Math.min(on,S.ops_free)} входят в базу${opsPaid>0?`, ${opsPaid} сверх × ${rub(S.ops_rate)}`:""})`;
+  if(opsPaid>0)add(nm,opsPaid*S.ops_rate);else items.push([nm,"входят в базу"])}
+  let payV=0;
+  if($("b_pay").value==="1"){payV=emp*S.emp_rate;add(`Расчёт заработной платы: ${plEmp(emp)} (1 чел. — ${rub(S.emp_rate)})`,payV)}
+  if($("b_vat").checked){const v=$("b_vatr").value;add("НДС ("+$("b_vatr").selectedOptions[0].text+")",v==="usn"?S.add_vat_usn:v==="mix"?S.add_vat_mix:S.add_vat)}
+  if($("b_ved").checked)add("ВЭД",S.add_ved);
+  {const w=$("b_wht").value;add(w==="goods"?"Себестоимость: товарный бизнес (товарный учёт)":w==="mix"?"Себестоимость: товары и услуги":"Себестоимость: бизнес услуг",w==="goods"?S.add_wh:w==="mix"?S.add_wh_mix:S.add_wh_serv)}
+  if($("b_kkt").checked){const n=Math.max(1,num("b_kktn"));add(`Касса / ККТ × ${n}`,n*S.add_kkt)}
+  if($("b_mpon").checked){
+    const nm=[["b_wb","Wildberries"],["b_oz","Ozon"],["b_ym","Яндекс Маркет"]].filter(x=>$(x[0]).checked).map(x=>x[1]);
+    add(`Маркетплейсы: ${nm.join(", ")||"не выбраны"} × ${nm.length}`,nm.length*S.add_mp);
+  }
+  if($("b_1c").value!=="none"){
+    const per=ops/ents;
+    const t=per<=S.c1_b1?[S.c1_t1,"до "+S.c1_b1]:per<=S.c1_b2?[S.c1_t2,"до "+S.c1_b2]:per<=S.c1_b3?[S.c1_t3,"до "+S.c1_b3]:[S.c1_t4,"свыше "+S.c1_b3];
+    add(`Стандартное ведение базы 1С${ents>1?" ("+ents+" шт.)":""}: ${t[1]} операций в месяц на базу`,ents*t[0]);
+  }
+  const m=Math.round(sum);
+  const rb=k=>r500(back*Math.max(S.back_min,m*k/100));
+  return {m,items,nums,pay:payV,emp,over:ops>S.ops_max,backN:back,backLo:rb(S.back_lo),backHi:rb(S.back_hi),onec:$("b_1c").value==="no"?ents*S.one_c:0,ents,ext:extras("b"),callH:Math.max(1,Math.round(num("b_callh")||1)),callV:Math.max(1,Math.round(num("b_callh")||1))*hrRate($("b_who").value==="staff",$("b_fmt").value==="on"),staff:$("b_who").value==="staff",online:$("b_fmt").value==="on"};
+}
+function lvl(m){return m<=S.lvl_light?["Лайт","ok"]:m<=S.lvl_std?["Стандарт",""]:["Сложный учёт","warn"]}
+
+function renderBuh(){
+  const fm=$("b_form").value;
+  $("b_grp").classList.toggle("hide",fm!=="group");
+  $("b_regbox").classList.toggle("hide",fm==="group"||fm==="self");
+  $("b_vatbox").classList.toggle("hide",!$("b_vat").checked);
+  $("b_kktbox").classList.toggle("hide",!$("b_kkt").checked);
+  $("b_mpbox").classList.toggle("hide",!$("b_mpon").checked);
+  $("b_opsnote").textContent=`Операция — одна строка банковской выписки или один первичный документ (платёж, поступление, акт, накладная). Не знаете — ставьте 30. До ${S.ops_free} в месяц входят в базу, дальше +${S.ops_rate} ₽ за каждую.`;
+  const c=calcBuh(), sp=S.spread/100, L=lvl(c.m), mt=c.m+c.callV;
+  $("b_callnote").textContent=`Созвон входит всегда: 1 час в месяц — со мной ${rub(S.i_hour)}, с сотрудником ${rub(S.i_hour_staff)}. Нужно больше — укажите общее число часов, цена вырастет.`;
+  $("b_price").innerHTML=bigPrice(mt," / мес");
+  $("b_range").textContent=`Вилка: ${rub(r500(mt*(1-sp)))} – ${rub(r500(mt*(1+sp)))}`;
+  $("b_level").innerHTML=`<span class="pill ${L[1]}">Уровень: ${L[0]}</span>`+(c.over?` <span class="pill warn">Операций больше ${S.ops_max} — считать индивидуально</span>`:"");
+  const t=c.items.map(x=>[c1wrap(x[0]),x[1]]);
+  t.push(["Вопросы и коммуникация в чате","бесплатно"]);
+  t.push([`Созвон ${whoTxt(c.staff,c.online)}: ${c.callH} ч в месяц (1 час — ${rub(hrRate(c.staff,c.online))})`,rub(c.callV)]);
+  taxRows(mt,"Итого в месяц").forEach(r=>t.push(r));
+  extRows(c.ext).forEach(r=>t.push(r));
+  if(c.backN>0)t.push([`Разово: восстановление (${c.backN} мес.)`,`${rub(c.backLo)} – ${rub(c.backHi)}`,"tot"]);
+  if(c.onec>0)t.push([`Разово: заведение базы 1С (${c.ents} шт.)`,rub(c.onec),"tot"]);
+  $("b_tbl").innerHTML=rows(t);
+  {const R=[["Учёт за месяц","операции отражены, первичные документы обработаны, налоги рассчитаны, отчётность сдана в срок"]];
+   if($("b_pay").value==="1"&&c.emp>0)R.push(["Зарплата и кадры","расчёт зарплаты, ведомости и отчётность по сотрудникам ("+plEmp(c.emp)+")"]);
+   if($("b_vat").checked)R.push(["НДС","расчёт налога, книги покупок и продаж, декларация по НДС"]);
+   if($("b_ved").checked)R.push(["ВЭД","учёт внешнеэкономических операций и валютных расчётов"]);
+   {const w=$("b_wht").value;R.push(["Себестоимость",w==="goods"?"товарный учёт: остатки, списание и себестоимость товаров":w==="mix"?"себестоимость товаров и услуг, товарный учёт":"себестоимость услуг"])}
+   if($("b_kkt").checked)R.push(["Касса и ККТ","учёт кассовых операций и работы кассовой техники"]);
+   if($("b_mpon").checked)R.push(["Маркетплейсы","продажи, комиссии и выплаты маркетплейсов отражены в учёте"]);
+   if($("b_1c").value==="no")R.push(["База 1С","заведённая и настроенная база 1С"]);
+   if(c.backN>0)R.push(["Восстановленный учёт","учёт приведён в порядок за "+c.backN+" мес."]);
+   R.push(["Созвон "+whoTxt(c.staff,c.online),c.callH+" ч в месяц: разбор вопросов, рекомендации"],["Чат","ответы на вопросы и коммуникация в чате — бесплатно"]);
+   c.ext.forEach(x=>R.push([x[0].startsWith("Таблицы")?"Таблицы":"Цифровой офис",x[0].startsWith("Таблицы")?"готовые таблицы под ваши задачи (разово)":"документы и таблицы всех отделов собраны и структурированы (разово)"]));
+   $("b_res").innerHTML=resHTML(R,"Что является результатом работы:")}
+  $("b_day").textContent=`Для постов: ≈ ${rub(mt/30)} в день (цена ÷ 30). На сайте — только цена в месяц. Восстановление зависит от формы, режима и сложности: считается от месячной цены (${S.back_lo}–${S.back_hi}%, не меньше ${rub(S.back_min)} за месяц).`;
+  return c;
+}
+
+const MG=[["dds","ДДС и ОПиУ каждый месяц","i_dds"],["ost","Платёжный календарь","i_ost"],["call","Созвон или личная встреча со мной 1 раз в месяц (2 часа)","i_call"],["plan","Бюджет и план-факт","i_plan"],["call2","Второй созвон или встреча со мной в месяц (2 часа)","i_call2"],["goods","Товарный учёт","i_goods"],["rep","Отчёт владельцу с выводами и рекомендациями","i_rep"],["app","Доступ к приложению и боту НЕЙЛА","i_app"]];
+const PK1=["dds","ost","call","rep","app"], PK2=["dds","ost","call","rep","app","plan","call2","goods"];
+function pkg(keys){const items=MG.filter(x=>keys.includes(x[0])).map(x=>[x[1],S[x[2]]]);const sep=items.reduce((a,x)=>a+x[1],0);const price=r500(sep*(1-S.pk_disc/100));return {items,sep,price,disc:sep-price}}
+const MG_BASE=["dds","ost","call","rep","app"], MG_ADD=["plan","call2","goods"];
+$("m_base").innerHTML=MG.filter(x=>MG_BASE.includes(x[0])).map(x=>`<div class="chk" style="margin:6px 0"><span style="color:var(--ok)">✓</span><span id="ml_${x[0]}"></span></div>`).join("");
+$("m_list").innerHTML=MG.filter(x=>MG_ADD.includes(x[0])).map(x=>`<div class="chk"><input type="checkbox" id="m_${x[0]}"><label style="margin:0;color:inherit" id="ml_${x[0]}"></label></div>`).join("");
+const whoM=()=>$("m_who").value==="staff";
+const hrRate=(st,on)=>st?S.i_hour_staff:(on?S.i_hour_online:S.i_hour);
+const onM=()=>$("m_fmt").value==="on";
+const whoTxt=(st,on)=>st?"с моим сотрудником":(on?"со мной онлайн":"со мной");
+function mgv(x){if(whoM()&&(x[0]==="call"||x[0]==="call2"))return [x[1].replace("со мной","с моим сотрудником"),S.i_hour_staff*2];if(!whoM()&&x[0]==="call2"&&onM())return [x[1].replace("со мной","со мной онлайн"),S.i_hour_online*2];return [x[1],S[x[2]]]}
+const giftRow=(n,v)=>[n,v===0?"🎁 в подарок":rub(v)];
+const freeRow=(n,v)=>[n,v===0?"бесплатно":rub(v)];
+function renderMgmt(){
+  const t=[];let sum=0;
+  MG.forEach(x=>{
+    const isBase=MG_BASE.includes(x[0]);
+    const v=mgv(x);
+    $("ml_"+x[0]).innerHTML=c1wrap(v[0],rub(v[1]));
+    if(isBase||$("m_"+x[0]).checked){t.push([c1wrap(v[0]),rub(v[1])]);sum+=v[1]}
+  });
+  const hrs=num("m_hrs");
+  $("m_hrsnote").textContent=`Каждый дополнительный час — ${rub(hrRate(whoM(),onM()))} (${whoTxt(whoM(),onM())}). Базовый созвон или встреча (2 часа) уже включён.`;
+  if(hrs>0){const hv=Math.round(hrs*hrRate(whoM(),onM()));t.push([`Дополнительные часы созвонов или встреч ${whoTxt(whoM(),onM())}: ${hrs} ч (1 час — ${rub(hrRate(whoM(),onM()))})`,rub(hv)]);sum+=hv}
+  t.push(freeRow("Вопросы и коммуникация в чате",S.i_chat));
+  const own=$("m_acc").value==="own";
+  if(own)t.push(["Коммуникация с текущей бухгалтерией","бесплатно"]);
+  if(!own){
+    t.push(["Итого управленческий учёт",rub(sum),"tot"]);
+    const c=calcBuh();
+    t.push(["Бухгалтерия (из вкладки «Бухгалтерия»)",rub(c.m)]);
+    taxRows(c.m+sum,"Бухгалтерия + управленка, в месяц").forEach(r=>t.push(r));
+  }else taxRows(sum,"Итого управленческий учёт").forEach(r=>t.push(r));
+  extRows(extras("m")).forEach(r=>t.push(r));
+  {const bs=MG.filter(x=>MG_BASE.includes(x[0])).reduce((a,x)=>a+mgv(x)[1],0);
+   {const r=taxRate();$("m_baseh").innerHTML="Всегда входит в управленческий учёт (база) — "+(r?`${rub(grossUp(bs,r))} <span style="font-size:13px;font-weight:400;color:var(--mut)">услуг на ${rub(bs)} без налога</span>`:rub(bs))}
+   const G=[freeRow("Вопросы и коммуникация в чате",S.i_chat),["Коммуникация с текущей бухгалтерией (когда бухгалтерия не нужна)","бесплатно"]];
+   $("m_basegift").innerHTML=G.map((g,i)=>`<div class="chk" style="margin:6px 0"><span style="color:var(--ok)">✓</span><span${i===1&&!own?' style="color:var(--mut)"':""}>${g[0]} — ${g[1].replace("🎁 ","")}</span></div>`).join("")}
+  $("m_price").innerHTML=bigPrice(sum," / мес");
+  $("m_tbl").innerHTML=rows(t);
+  {const TX={dds:["ДДС и ОПиУ","ежемесячные отчёты: куда уходят деньги и сколько прибыли"],ost:["Платёжный календарь","контроль остатков, дебиторки, кредиторки и кассовых разрывов"],call:["Созвон или встреча "+whoTxt(whoM()),"раз в месяц, 2 часа: разбор цифр и решения"],rep:["Отчёт владельцу","выводы и рекомендации по цифрам месяца"],plan:["Бюджет и план-факт","сравнение плана с фактом, отклонения и их причины"],call2:["Второй созвон или встреча "+whoTxt(whoM(),onM()),"ещё 2 часа в месяц"],goods:["Товарный учёт","остатки, оборачиваемость и движение товаров"],app:["Доступ к приложению и боту НЕЙЛА","приложение для просмотра ключевых показателей бизнеса"]};
+   const R=MG.filter(x=>MG_BASE.includes(x[0])||$("m_"+x[0]).checked).map(x=>TX[x[0]]);
+   if(hrs>0)R.push(["Дополнительные часы",hrs+" ч встреч или созвонов"]);
+   R.push(["Чат","вопросы и коммуникация в чате — бесплатно"]);
+   extras("m").forEach(x=>R.push([x[0].startsWith("Таблицы")?"Таблицы":"Цифровой офис",x[0].startsWith("Таблицы")?"готовые таблицы под ваши задачи (разово)":"документы и таблицы всех отделов собраны и структурированы (разово)"]));
+   $("m_res").innerHTML=resHTML(R,"Что является результатом работы:")}
+}
+function packCard(el,name,keys,c){
+  const acc=$("p_acc").value==="our", pk=pkg(keys), base1=PK1;
+  const t=[["УПРАВЛЕНЧЕСКИЙ УЧЁТ — входит в пакет","","sec sm"]];
+  MG.filter(x=>PK1.includes(x[0])).forEach(x=>t.push([c1wrap(x[1]),rub(S[x[2]])]));
+  MG.filter(x=>keys.includes(x[0])&&!PK1.includes(x[0])).forEach(x=>t.push([c1wrap(x[1]),rub(S[x[2]])]));
+  t.push(["Бесплатно",""]);
+  t.push(freeRow("Вопросы и коммуникация в чате",S.i_chat));
+  if(!acc)t.push(["Коммуникация с текущей бухгалтерией","бесплатно"]);
+  if(pk.disc>0){t.push(["Сумма услуг по отдельности",rub(pk.sep),"tot"]);t.push([`Скидка за пакет (${S.pk_disc}%)`,"−"+rub(pk.disc)])}
+  t.push([`Итого управленческий учёт — цена пакета ${name}`,rub(pk.price),"tot"]);
+  let total=pk.price;
+  if(acc){
+    const det=c.items.filter(x=>!x[0].startsWith("Расчёт заработной платы")&&x[1]!=="").map(x=>`<div style="display:flex;justify-content:space-between;gap:10px;font-size:13px;color:var(--mut);padding:2px 0 2px 14px"><span>${c1wrap(x[0])}</span><span>${x[1]}</span></div>`).join("");
+    const buhV=Math.max(0,c.m-c.pay);
+    t.push(["БУХГАЛТЕРИЯ — по расчёту клиента (вкладка «Бухгалтерия»)","","sec sb"],[`<details><summary style="cursor:pointer">Бухгалтерия, налоги, отчётность ▾</summary>${det}</details>`,rub(buhV)]);
+    if(c.pay>0)t.push([`Зарплата и кадры: ${plEmp(c.emp)} (1 чел. — ${rub(S.emp_rate)})`,rub(c.pay)]);
+    t.push(["Итого бухгалтерия",rub(c.m),"tot"]);
+    total+=c.m;
+  }else t.push(["БУХГАЛТЕРИЯ — не нужна","","sec sb"]);
+  taxRows(total,acc?"Итого в месяц (пакет + бухгалтерия)":"Итого в месяц").forEach(r=>t.push(r));
+  el.innerHTML=`<h2>${name}</h2><div class="big">${bigPrice(total," / мес")}</div><table style="margin-top:12px">${rows(t)}</table><div class="note">${acc&&c.over?`Внимание: операций больше ${S.ops_max} в месяц, бухгалтерию нужно считать индивидуально. `:""}Для постов: ≈ ${rub(total/30)} в день.</div>`;
+}
+function renderPack(){
+  const c=calcBuh();
+  packCard($("pk1"),"ОПОРА-Цифры",PK1,c);
+  packCard($("pk2"),"ОПОРА-Контроль",PK2,c);
+}
+
+function neylaCall(){const k=$("n_call").value,p=parseInt($("n_per").value);if(k==="no")return null;const m=k==="me"?S.ny_me:S.ny_staff;return {k,m,total:m*p,p,name:k==="me"?"со мной":"с моим сотрудником"}}
+function renderNeyla(){
+  const p=$("n_per").value, price=S["n"+p], per=price/p;
+  $("n_note").textContent=`В подарок: настройка шаблона и приложения и первичный созвон-консультация (показываю, как работать с приложением и какие ключевые показатели смотреть). Пробный период 3 дня. Ежемесячный созвон: со мной ${rub(S.ny_me)}, с сотрудником ${rub(S.ny_staff)} в месяц.`;
+  const nc=neylaCall(), grand=price+(nc?nc.total:0);
+  $("n_price").textContent=rub(grand);
+  const t=[["Подписка в месяц",rub(per)]];
+  if(p!=="1")t.push(["Экономия к помесячной оплате",rub(S.n1*p-price)]);
+  t.push(giftRow("Настройка шаблона и приложения",0),giftRow("Первичный созвон, консультация",0));
+  if(nc)t.push([`Созвон раз в месяц ${nc.name}: ${rub(nc.m)} × ${nc.p} мес.`,rub(nc.total)]);
+  t.push(["Итого за период (фиксированный тариф, налог не начисляется)",rub(grand),"tot"]);
+  $("n_res").innerHTML=resHTML([["Подписка НЕЙЛА",p+" мес. доступа к боту и приложению"],["🎁 Настройка шаблона и приложения","под ваш бизнес — в подарок"],["🎁 Первичный созвон, консультация","показываю, как работать с приложением и какие ключевые показатели смотреть — в подарок"]].concat(nc?[["Созвон раз в месяц "+nc.name,"разбор итогов результата месяца"]]:[]),"Что является результатом работы:");
+  t.push(["В день (для постов)",rub(price/(p*30))]);
+  $("n_tbl").innerHTML=rows(t);
+}
+
+function calcAudit(){
+  const mon=Math.max(1,num("a_mon")), ops=num("a_ops"), ent=Math.max(1,num("a_ent")), mp=num("a_mp");
+  const L=[]; let sum=0; const add=(n,v)=>{if(v>0){L.push([n,v]);sum+=v}};
+  if($("a_k1").checked)add("Коммуникация с текущей бухгалтерией",S.au_k1);
+  if($("a_k2").checked)add("Аудит учёта за период",S.au_k2);
+  if($("a_k3").checked)add("Финансовый аудит бизнеса",S.au_k3);
+  if(sum===0)return {L:[],m:0};
+  add(`Период ${mon} мес. (сверх ${S.au_mon_free})`,Math.max(0,mon-S.au_mon_free)*S.au_mon);
+  const total=ops*mon;
+  add(`Операции за весь период: ${total} (${S.au_ops_free} входят в базу)`,Math.max(0,total-S.au_ops_free)*S.au_ops);
+  add(`Доп. юрлица/ИП (${ent-1})`,(ent-1)*S.au_ent);
+  if($("a_vat").checked)add("ОСНО / НДС",S.au_vat);
+  if($("a_ved").checked)add("ВЭД",S.au_ved);
+  if($("a_wh").checked)add("Склад / себестоимость",S.au_wh);
+  add(`Маркетплейсы (${mp})`,mp*S.au_mp);
+  {const tb=Math.max(0,Math.round(num("a_tblc")));if(tb>0)add(`Анализ прочих таблиц: ${tb} шт. (1 таблица — ${rub(S.au_tbl)})`,tb*S.au_tbl)}
+  if($("a_rep").checked)add("Отчёт с выводами и рекомендациями",S.au_rep);
+  if($("a_rush").checked){const r=Math.round(sum*S.au_rush/100);L.push([`Срочность: результат за 1 неделю (+${S.au_rush}%)`,r]);sum+=r}
+  return {L,m:Math.round(sum)};
+}
+function renderAudit(){
+  const a=calcAudit();
+  $("a_rushl").textContent=`Срочно — результат за 1 неделю (+${S.au_rush}%)`;
+  $("a_rushn").textContent=`Обычный срок выполнения — 2 недели. При срочности результат готов за 1 неделю, стоимость выше на ${S.au_rush}%.`;
+  if(a.m===0){$("a_res").innerHTML="";$("a_price").textContent="Выбери вид аудита";$("a_range").textContent="";$("a_tbl").innerHTML="";return}
+  const t=a.L.map(x=>[x[0],rub(x[1])]); taxRows(a.m,"Итого, разово").forEach(r=>t.push(r));
+  const sp=S.spread/100;
+  $("a_price").innerHTML=bigPrice(a.m);
+  $("a_range").textContent=`Вилка: ${rub(gx(r500(a.m*(1-sp))))} – ${rub(gx(r500(a.m*(1+sp))))}`;
+  $("a_tbl").innerHTML=rows(t);
+  {const R=[];
+   if($("a_k1").checked)R.push(["Коммуникация с текущей бухгалтерией","анализ основной базы 1С и базы ЗУП, рекомендации по исправлению ошибок, регламент работы по закрытию месяца"]);
+   if($("a_k2").checked)R.push(["Аудит учёта за период","найденные ошибки и расхождения, риски по налогам и отчётности, что исправить"]);
+   if($("a_k3").checked)R.push(["Финансовый аудит бизнеса","состояние денег и прибыли (ДДС, ОПиУ), дебиторка и кредиторка, кассовые разрывы, структура расходов"]);
+   if($("a_vat").checked)R.push(["ОСНО / НДС","проверка НДС и налогового учёта на ОСНО"]);
+   if($("a_ved").checked)R.push(["ВЭД","учёт внешнеэкономических операций, курсовые разницы, таможенные платежи"]);
+   if($("a_wh").checked)R.push(["Склад и себестоимость","остатки, списание и себестоимость, расхождения учёта и склада"]);
+   if(num("a_mp")>0)R.push(["Маркетплейсы","сверка отчётов и выплат маркетплейсов с учётом"]);
+   if(num("a_tblc")>0)R.push(["Итоги анализа прочих таблиц","разбор ваших таблиц (Excel и др.): ошибки, расхождения, что привести в порядок"]);
+   if($("a_rep").checked)R.push(["Выводы и рекомендации","главные выводы и пошаговый план, что делать дальше"]);
+   $("a_res").innerHTML=resHTML(R,"Результат аудита — <b>отчёт</b>, в котором есть разделы:")}
+}
+function renderAll(){renderBuh();renderMgmt();renderPack();renderNeyla();renderAudit();renderList()}
+
+// группа компаний: строки
+const REGOPT=$("b_reg").innerHTML;
+function addRow(f,r){
+  const d=document.createElement("div");d.className="row grow";d.style.alignItems="end";
+  d.innerHTML=`<div><select class="gf"><option value="ip">ИП</option><option value="ooo">ООО</option><option value="self">Самозанятый</option></select></div><div><select class="gr">${REGOPT}</select></div><div style="flex:0 0 auto"><button type="button" class="gx" style="margin:0">✕</button></div>`;
+  d.querySelector(".gf").value=f;d.querySelector(".gr").value=r;
+  $("g_rows").appendChild(d);
+}
+addRow("ip","usn6");addRow("ooo","usn6");
+$("g_add").onclick=()=>{addRow("ip","usn6");renderAll()};
+$("g_rows").addEventListener("click",e=>{if(e.target.classList.contains("gx")){e.target.closest(".grow").remove();renderAll()}});
+$("g_rows").addEventListener("change",e=>{if(e.target.classList.contains("gf")){e.target.closest(".grow").querySelector(".gr").classList.toggle("hide",e.target.value==="self")}});
+function getMgmt(){const lines=[];let sum=0;MG.forEach(x=>{if(MG_BASE.includes(x[0])||$("m_"+x[0]).checked){const v=mgv(x);lines.push([v[0],v[1]]);sum+=v[1]}});const hrs=num("m_hrs");if(hrs>0){const hv=Math.round(hrs*hrRate(whoM(),onM()));lines.push([`Дополнительные часы созвонов или встреч ${whoTxt(whoM(),onM())}: ${hrs} ч (1 час — ${rub(hrRate(whoM(),onM()))})`,hv]);sum+=hv}return {lines,sum,ext:extras("m")}}
+const RN={npd:"Самозанятый / НПД",patent:"Патент",ausn8:"АУСН «доходы» 8%",ausn15:"АУСН «доходы−расходы» 15%",usn6:"УСН «доходы»",usn15:"УСН «доходы−расходы»",osno:"ОСНО"};
+function listData(){
+  const g=v=>v===0?"🎁 в подарок":rub(v);
+  const B=[],M=[],N=[],P=[],A=[];
+  Object.keys(RN).forEach(k=>B.push([`Базовая стоимость: ${RN[k]}`,rub(S["base_"+k]),"в месяц"]));
+  B.push(["Надбавка за ООО","+"+rub(S.add_ooo),"в месяц"],
+   [`Операции: до ${S.ops_free} в месяц входят в базу`,"—",""],
+   [`Каждая операция сверх ${S.ops_free} в месяц (до ${S.ops_max} в месяц)`,rub(S.ops_rate),"в месяц"],
+   ["Расчёт заработной платы, за 1 сотрудника",rub(S.emp_rate),"в месяц"],
+   ["НДС 5% или 7% (на УСН)",rub(S.add_vat_usn),"в месяц"],["НДС 10% или 20%",rub(S.add_vat),"в месяц"],["НДС 10% и 20% вместе",rub(S.add_vat_mix),"в месяц"],
+   ["ВЭД",rub(S.add_ved),"в месяц"],["Себестоимость: товарный бизнес (товарный учёт)",rub(S.add_wh),"в месяц"],["Себестоимость: бизнес услуг",rub(S.add_wh_serv),"в месяц"],["Себестоимость: товары и услуги",rub(S.add_wh_mix),"в месяц"],
+   ["Касса / ККТ, за каждую кассу",rub(S.add_kkt),"в месяц"],["Маркетплейс (WB, Ozon, Яндекс Маркет), за каждый",rub(S.add_mp),"в месяц"],
+   [`Группа компаний: каждая следующая компания`,`${S.grp_next}% от базы`,"в месяц"],
+   [`Стандартное ведение базы 1С: до ${S.c1_b1} операций в месяц, за каждую базу`,rub(S.c1_t1),"в месяц"],[`Стандартное ведение базы 1С: ${S.c1_b1+1}–${S.c1_b2} операций`,rub(S.c1_t2),"в месяц"],[`Стандартное ведение базы 1С: ${S.c1_b2+1}–${S.c1_b3} операций`,rub(S.c1_t3),"в месяц"],[`Стандартное ведение базы 1С: свыше ${S.c1_b3} операций`,rub(S.c1_t4),"в месяц"],["Заведение базы 1С (если базы нет), за каждую",rub(S.one_c),"разово"],["База 1С не нужна","0 ₽",""],["Вопросы и коммуникация в чате","бесплатно",""],["Что входит в стандартное ведение 1С: "+C1_LIST.join("; ")+". "+C1_NOTE,"",""],
+   ["Восстановление учёта",`${S.back_lo}–${S.back_hi}% месячной цены, не менее ${rub(S.back_min)} за месяц`,"разово, за каждый месяц"]);
+  MG.filter(x=>MG_BASE.includes(x[0])).forEach(x=>M.push([x[1]+" (входит всегда)",rub(S[x[2]]),"в месяц"]));
+  MG.filter(x=>MG_ADD.includes(x[0])).forEach(x=>M.push([x[1]+" (доп)",rub(S[x[2]]),"в месяц"]));
+  M.push(["Таблицы: создание, проверка или анализ (за одну таблицу)",rub(S.i_tbl),"разово"],["Сборка цифрового офиса (документы и таблицы всех отделов, структурированно)",rub(S.i_office),"разово"]);
+  M.push(["Платёжный календарь включает: "+PC_LIST.join(", "),"",""]);
+  M.push(["Коммуникация с текущей бухгалтерией клиента (если бухгалтерию ведёт не ОПОРА)","бесплатно",""]);
+  M.push(["Дополнительный час встречи со мной офлайн (оплачивается отдельно)",rub(S.i_hour),"за час"],["Дополнительный час встречи со мной онлайн",rub(S.i_hour_online),"за час"],["Созвон или встреча (2 часа) с моим сотрудником вместо созвона со мной",rub(S.i_hour_staff*2),"в месяц"],["Дополнительный час созвона или встречи с сотрудником",rub(S.i_hour_staff),"за час"]);
+  M.push(["Вопросы и коммуникация в чате",S.i_chat===0?"бесплатно":rub(S.i_chat),""]);
+  [[1,"n1"],[3,"n3"],[6,"n6"],[12,"n12"]].forEach(x=>N.push([`Подписка на ${x[0]} мес.`,rub(S[x[1]]),`${rub(S[x[1]]/x[0])} в месяц`]));
+  N.push(["Настройка шаблона и приложения","🎁 в подарок",""],["Первичный созвон, консультация (как работать с приложением, какие показатели смотреть)","🎁 в подарок",""],["Созвон раз в месяц: итоги результата месяца — со мной",rub(S.ny_me),"в месяц"],["Созвон раз в месяц: итоги результата месяца — с сотрудником",rub(S.ny_staff),"в месяц"],["Пробный период","3 дня",""]);
+  [[ "ОПОРА-Цифры",PK1],["ОПОРА-Контроль",PK2]].forEach(x=>{
+    const k=pkg(x[1]), inc=MG.filter(y=>x[1].includes(y[0])).map(y=>y[1]).join("; ");
+    P.push([x[0]+" (управленческий учёт)",rub(k.price),"в месяц"],["Состав: "+inc+"; доступ к приложению и боту НЕЙЛА — 🎁 в подарок; вопросы и коммуникация в чате бесплатно. "+(k.disc>0?"Сумма услуг по отдельности "+rub(k.sep)+", скидка за пакет "+S.pk_disc+"%":"скидка за пакет не применяется"),"",""]);
+  });
+  P.push(["Бухгалтерия к пакету — отдельно, по расчёту клиента (вкладка «Бухгалтерия»)","по расчёту","в месяц"]);
+  A.push(["Коммуникация с текущей бухгалтерией, база",rub(S.au_k1),"разово"],["Аудит учёта за период, база",rub(S.au_k2),"разово"],["Финансовый аудит бизнеса, база",rub(S.au_k3),"разово"],
+   [`Период: ${S.au_mon_free} мес. входят в базу, каждый месяц сверх`,rub(S.au_mon),"разово"],
+   [`Операции за весь период проверки: ${S.au_ops_free} входят в базу, каждая сверх`,rub(S.au_ops),"разово"],
+   ["Каждое дополнительное юрлицо/ИП",rub(S.au_ent),"разово"],["ОСНО / НДС",rub(S.au_vat),"разово"],["ВЭД",rub(S.au_ved),"разово"],["Склад / себестоимость",rub(S.au_wh),"разово"],
+   ["Маркетплейс, за каждый",rub(S.au_mp),"разово"],["Анализ прочих таблиц, за одну таблицу",rub(S.au_tbl),"разово"],["Отчёт с выводами и рекомендациями",rub(S.au_rep),"разово"],["Срок выполнения: 2 недели","—",""],["Срочно: результат за 1 неделю",`+${S.au_rush}%`,"разово"]);
+  return [["Бухгалтерия",B],["Управленческий учёт",M],["НЕЙЛА",N],["Пакеты",P],["Аудит",A],["Режим работы",[[HOURS_NOTE,"",""]]]];
+}
+function renderList(){
+  $("l_body").innerHTML=listData().map(sec=>`<h4>${sec[0]}</h4><table>${sec[1].map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join("")}</table>`).join("");
+}
+function copyText(txt,msgId){
+  const done=ok=>{$(msgId).textContent=ok?"Скопировано в буфер обмена":"Не удалось скопировать автоматически — выдели текст вручную"};
+  try{navigator.clipboard.writeText(txt).then(()=>done(true),()=>fb())}catch(e){fb()}
+  function fb(){try{const ta=document.createElement("textarea");ta.value=txt;document.body.appendChild(ta);ta.select();const ok=document.execCommand("copy");ta.remove();done(ok)}catch(e){done(false)}}
+}
+$("l_copy").onclick=()=>copyText(listData().map(sec=>sec[0].toUpperCase()+"\n"+sec[1].map(r=>`- ${r[0]}${r[1]?": "+r[1]:""}${r[2]?" ("+r[2]+")":""}`).join("\n")).join("\n\n"),"l_msg");
+
+// спецификация
+const d0=new Date();$("sp_date").value=String(d0.getDate()).padStart(2,"0")+"."+String(d0.getMonth()+1).padStart(2,"0")+"."+d0.getFullYear();
+let SPEC=null;
+function buildSpec(){
+  const pk=$("sp_pk").value, c=calcBuh();
+  const secs=[]; let monthly=0, once=0, fixed=0; const restore=[];
+  const R=(n,p,v,t)=>({n,p,v,t});
+  const accOnce=()=>{
+    const r=[];
+    if(c.onec>0){r.push(R(`Заведение базы 1С (${c.ents} шт.)`,"разово",c.onec));once+=c.onec}
+    if(c.backN>0)r.push(R(`Восстановление учёта (${c.backN} мес.)`,"разово",null,`от ${rub(c.backLo)} до ${rub(c.backHi)}`));
+    return r;
+  };
+  if(pk!=="none"){
+    const keys=pk==="1"?PK1:PK2, name=pk==="1"?"ОПОРА-Цифры":"ОПОРА-Контроль", K=pkg(keys), acc=$("p_acc").value==="our";
+    const rows=[];
+    MG.filter(x=>keys.includes(x[0])).forEach(x=>rows.push(R(x[1],"входит в пакет",null,`отдельно ${rub(S[x[2]])}`)));
+    rows.push(R("Вопросы и коммуникация в чате","—",null,"бесплатно"));
+    if(!acc)rows.push(R("Коммуникация с текущей бухгалтерией","—",null,"бесплатно"));
+    secs.push({t:`Пакет «${name}» (управленческий учёт)`,rows});
+    const pr=[R(`Стоимость пакета «${name}»`,"ежемесячно",K.price)];
+    monthly+=K.price;
+    if(acc){secs.push({t:"Бухгалтерское обслуживание (по расчёту)",rows:c.nums.map(x=>R(x[0],"ежемесячно",x[1]))});monthly+=c.m}
+    secs.push({t:"Стоимость",rows:pr,note:K.disc>0?`Стоимость управленческих услуг по отдельности: ${rub(K.sep)} в месяц, скидка за пакет ${S.pk_disc}%.`:""});
+    const o=accOnce();if(o.length)secs.push({t:"Разовые услуги",rows:o});
+  }else{
+    if($("sp_b").checked){
+      secs.push({t:"Бухгалтерское обслуживание",rows:c.nums.map(x=>R(x[0],"ежемесячно",x[1])).concat([R("Вопросы и коммуникация в чате","—",null,"бесплатно")],(c.callV>0&&!$("sp_m").checked)?[R(`Созвон ${whoTxt(c.staff,c.online)}: ${c.callH} ч в месяц`,"ежемесячно",c.callV)]:[])});monthly+=c.m+((c.callV>0&&!$("sp_m").checked)?c.callV:0);
+      const o=accOnce();if(o.length)secs.push({t:"Разовые услуги по бухгалтерии",rows:o});
+      if(c.ext.length){secs.push({t:"Разовые услуги: таблицы и цифровой офис (бухгалтерия)",rows:c.ext.map(x=>R(x[0],"разово",x[1]))});once+=c.ext.reduce((a,x)=>a+x[1],0)}
+    }
+    if($("sp_m").checked){
+      const m=getMgmt();
+      const rows=m.lines.map(x=>R(x[0],"ежемесячно",x[1]));
+      [["Вопросы и коммуникация в чате",S.i_chat,"бесплатно"]].forEach(x=>rows.push(x[1]===0?R(x[0],"—",null,x[2]):R(x[0],"ежемесячно",x[1])));
+      if($("m_acc").value==="own")rows.push(R("Коммуникация с текущей бухгалтерией","—",null,"бесплатно"));
+      secs.push({t:"Управленческий учёт",rows});monthly+=m.sum+S.i_chat;
+      if(m.ext.length){secs.push({t:"Разовые услуги: таблицы и цифровой офис (управленческий учёт)",rows:m.ext.map(x=>R(x[0],"разово",x[1]))});once+=m.ext.reduce((a,x)=>a+x[1],0)}
+    }
+    if($("sp_n").checked){
+      const per=parseInt($("n_per").value), v=S["n"+per];
+      secs.push({t:"НЕЙЛА",rows:[R(`Подписка НЕЙЛА, ${per} мес. (${rub(v/per)} в месяц)`,"за период",v),R("Настройка шаблона и приложения","—",null,"🎁 в подарок"),R("Первичный созвон, консультация","—",null,"🎁 в подарок")].concat((c=>c?[R(`Созвон раз в месяц ${c.name} (${rub(c.m)} в месяц)`,"за период",c.total)]:[])(neylaCall()))});fixed+=v+(neylaCall()?neylaCall().total:0);
+    }
+  }
+  if($("sp_a").checked){
+    const a=calcAudit();
+    if(a.m>0){secs.push({t:"Аудит",rows:a.L.map(x=>R(x[0],"разово",x[1]))});once+=a.m}
+  }
+  const hasRestore=secs.some(s=>s.rows.some(r=>r.v===null&&r.t&&r.t.startsWith("от ")));
+  return {secs,monthly,once,fixed,hasRestore,rate:taxRate(),tlab:taxLabel(),client:$("sp_client").value.trim(),no:$("sp_no").value.trim(),date:$("sp_date").value.trim(),exec:$("sp_exec").value.trim()};
+}
+const cost=r=>r.t||rub(r.v);
+function renderSpec(sp){
+  const head=`<h3>Спецификация${sp.no?" № "+sp.no:""}${sp.date?" от "+sp.date:""}</h3><div class="meta">${sp.exec?"Исполнитель: "+sp.exec+"<br>":""}${sp.client?"Клиент: "+sp.client:""}</div>`;
+  const body=sp.secs.map(s=>`<h4>${s.t}</h4><table>${s.rows.map(r=>`<tr><td>${c1wrap(r.n)}</td><td>${r.p}</td><td>${cost(r)}</td></tr>`).join("")}</table>${s.note?`<div class="note">${s.note}</div>`:""}`).join("");
+  const tot=[];
+  const addT=(lab,pay,v)=>{if(sp.rate){const g=grossUp(v,sp.rate);tot.push([`Налог ${sp.rate}% (${sp.tlab}), включён в сумму`,rub(g-v),""]);tot.push([pay,rub(g),"tot"])}else tot.push([lab,rub(v),"tot"])};
+  if(sp.monthly>0)addT("Итого ежемесячно","Итого к оплате ежемесячно",sp.monthly);
+  if(sp.once>0)addT("Итого разовые платежи и платежи за период","Итого к оплате: разовые платежи и платежи за период",sp.once);
+  if(sp.fixed>0)tot.push(["Итого НЕЙЛА — фиксированный тариф, налог не начисляется",rub(sp.fixed),"tot"]);
+  const tt=tot.length?`<table style="margin-top:14px">${tot.map(r=>`<tr class="${r[2]||""}"><td>${r[0]}</td><td></td><td>${r[1]}</td></tr>`).join("")}</table>`:"";
+  const nt=`<div class="note">${HOURS_NOTE}</div>`+(sp.hasRestore?`<div class="note">Стоимость восстановления учёта окончательно определяется после диагностики и не входит в итоговые суммы выше.</div>`:"");
+  $("sp_doc").innerHTML=head+(sp.secs.length?body+tt+nt:"<div class='note'>Ничего не выбрано.</div>");
+}
+function specText(sp){
+  let t=`СПЕЦИФИКАЦИЯ${sp.no?" № "+sp.no:""}${sp.date?" от "+sp.date:""}\n`;
+  if(sp.exec)t+=`Исполнитель: ${sp.exec}\n`;if(sp.client)t+=`Клиент: ${sp.client}\n`;
+  sp.secs.forEach(s=>{t+=`\n${s.t.toUpperCase()}\n`+s.rows.map(r=>`- ${r.n} (${r.p}): ${cost(r)}`+((w=>w?`
+    Включено: ${w[1].join(w[4])}.${w[2]?" "+w[2]:""}`:"")(WRAPS.find(x=>String(r.n).startsWith(x[0]))))).join("\n")+"\n"+(s.note?s.note+"\n":"")});
+  t+="\n";const tl=(lab,pay,v)=>{if(sp.rate){const g=grossUp(v,sp.rate);t+=`Налог ${sp.rate}% (${sp.tlab}), включён в сумму: ${rub(g-v)}\n${pay}: ${rub(g)}\n`}else t+=`${lab}: ${rub(v)}\n`};if(sp.monthly>0)tl("Итого ежемесячно","Итого к оплате ежемесячно",sp.monthly);if(sp.once>0)tl("Итого разовые платежи и платежи за период","Итого к оплате: разовые платежи и платежи за период",sp.once);if(sp.fixed>0)t+=`Итого НЕЙЛА — фиксированный тариф, налог не начисляется: ${rub(sp.fixed)}\n`;
+  if(sp.hasRestore)t+="Стоимость восстановления учёта определяется после диагностики и в итоги не входит.\n";
+  t+=HOURS_NOTE+"\n";
+  return t;
+}
+$("sp_pk").addEventListener("change",()=>{$("sp_sep").classList.toggle("hide",$("sp_pk").value!=="none")});
+$("sp_done").onclick=()=>{SPEC=buildSpec();renderSpec(SPEC);$("sp_doc").classList.remove("hide");$("sp_print").classList.remove("hide");$("sp_copy").classList.remove("hide");$("sp_msg").textContent="Спецификация собрана ниже."};
+$("sp_print").onclick=()=>{try{window.print()}catch(e){$("sp_msg").textContent="Печать недоступна в этом окне. Открой файл в браузере."}};
+$("sp_copy").onclick=()=>{if(SPEC)copyText(specText(SPEC),"sp_msg")};
+
+// вкладки
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x===t));
+  ["buh","mgmt","neyla","pack","audit","list","spec"].forEach(k=>$("t-"+k).classList.toggle("hide",k!==t.dataset.t));
+});
+document.addEventListener("input",e=>{if(!e.target.closest("#settings"))renderAll()});
+
+// настройки
+function buildSettings(){
+  $("settings").innerHTML=Object.keys(DEF).map(k=>`<span>${LBL[k]}</span><input type="number" data-k="${k}" value="${S[k]}">`).join("");
+  $("settings").querySelectorAll("input").forEach(i=>i.addEventListener("input",()=>{
+    const key=i.dataset.k;
+    const value=i.valueAsNumber;
+    if(key==="tax_ip"||key==="tax_fl"){
+      const valid=isTaxRate(value);
+      i.setCustomValidity(valid?"":"Введите ставку от 0 до 100%, не включая 100%.");
+      if(!valid){i.reportValidity();return}
+    }
+    S[key]=Number.isFinite(value)?value:0;
+    try{localStorage.setItem("opora_calc",JSON.stringify(S))}catch(e){}
+    renderAll();
+  }));
+}
+$("reset").onclick=()=>{S={...DEF};try{localStorage.removeItem("opora_calc")}catch(e){};buildSettings();renderAll()};
+buildSettings();renderAll();
+</script>
+</body>
+</html>
