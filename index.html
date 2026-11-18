@@ -244,6 +244,7 @@ td > details { margin: 0; }
 .document-template h3 { grid-column: 1 / -1; margin: 0; font-size: 15px; }
 .document-template input { max-width: 100%; min-width: 0; color: var(--mut); font-size: 13px; }
 .document-template .document-status { grid-column: 1 / -1; min-height: 1.5em; }
+.document-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 .document-template button:disabled { opacity: .55; cursor: default; }
 @media (max-width: 540px) {
   .document-template { grid-template-columns: minmax(0, 1fr); }
@@ -499,7 +500,10 @@ td > details { margin: 0; }
         <label>Шаблон: договор (.docx)
           <input type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" disabled>
         </label>
-        <button type="button" disabled>Создать договор</button>
+        <div class="document-actions">
+          <button type="button" data-action="generate" disabled>Создать договор</button>
+          <button type="button" data-action="remove" disabled>Убрать шаблон</button>
+        </div>
         <p class="note document-status" role="status">Загружаю настройки…</p>
       </div>
       <div class="document-template" data-template="invoice">
@@ -507,7 +511,10 @@ td > details { margin: 0; }
         <label>Шаблон: счёт на оплату (.docx)
           <input type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" disabled>
         </label>
-        <button type="button" disabled>Создать счёт на оплату</button>
+        <div class="document-actions">
+          <button type="button" data-action="generate" disabled>Создать счёт на оплату</button>
+          <button type="button" data-action="remove" disabled>Убрать шаблон</button>
+        </div>
         <p class="note document-status" role="status">Загружаю настройки…</p>
       </div>
       <div class="document-template" data-template="act">
@@ -515,7 +522,10 @@ td > details { margin: 0; }
         <label>Шаблон: акт об оказании услуг (.docx)
           <input type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" disabled>
         </label>
-        <button type="button" disabled>Создать акт об оказании услуг</button>
+        <div class="document-actions">
+          <button type="button" data-action="generate" disabled>Создать акт об оказании услуг</button>
+          <button type="button" data-action="remove" disabled>Убрать шаблон</button>
+        </div>
         <p class="note document-status" role="status">Загружаю настройки…</p>
       </div>
     </section>
@@ -1121,12 +1131,13 @@ buildSettings();renderAll();
     const key = row.dataset.template;
     const fileInput = row.querySelector("input");
     const status = row.querySelector(".document-status");
-    const button = row.querySelector("button");
+    const button = row.querySelector("[data-action=generate]");
+    const remove = row.querySelector("[data-action=remove]");
     let busy = true;
 
     const show = message => {
       status.textContent = message;
-      button.disabled = busy || !records.has(key);
+      button.disabled = remove.disabled = busy || !records.has(key);
     };
     const shownTemplate = record => "Шаблон: " + record.name;
     const initialize = async () => {
@@ -1168,6 +1179,24 @@ buildSettings();renderAll();
       } catch (error) {
         result = error.message;
         if (records.has(key)) result += " Сохранён прежний шаблон.";
+      } finally {
+        busy = false;
+        fileInput.disabled = false;
+        show(result);
+      }
+    });
+
+    remove.addEventListener("click", async () => {
+      busy = true;
+      fileInput.disabled = true;
+      show("Удаляю шаблон…");
+      let result;
+      try {
+        if (await storage) await useStorage("readwrite", store => store.delete(key));
+        records.delete(key);
+        result = "Шаблон удалён.";
+      } catch {
+        result = "Не удалось удалить шаблон. Попробуйте ещё раз.";
       } finally {
         busy = false;
         fileInput.disabled = false;
