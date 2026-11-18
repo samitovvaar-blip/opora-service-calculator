@@ -468,7 +468,7 @@ td > details { margin: 0; }
           <li>Умножаем месячную стоимость на количество месяцев. При срочном выполнении добавляем наценку.</li>
         </ol>
       </details>
-      <div class="note">Срок согласуем на созвоне и фиксируем в договоре.</div>
+      <div class="note" id="a_accounting_term"></div>
       <div id="a_accounting_options" class="hide">
         <label for="a_mon">Месяцев восстановления бухучёта</label>
         <input type="number" id="a_mon" value="1" min="1" step="1">
@@ -492,32 +492,21 @@ td > details { margin: 0; }
         <p id="a_management_rate" class="note"></p>
       </div>
 
-      <div class="chk"><input type="checkbox" id="a_k4"><label for="a_k4" style="margin:0;color:inherit">Финансовый аудит бизнеса</label></div>
-      <details class="adesc">
-        <summary>Что это</summary>
-        <ol>
-          <li>Собираем бухгалтерскую отчётность.</li>
-          <li>Собираем управленческую отчётность.</li>
-          <li>Разбираем результаты и даём рекомендации по дальнейшим действиям.</li>
-        </ol>
-      </details>
-      <div class="note">Стоимость и срок — по согласованию.</div>
-
-      <h2 style="margin-top:16px">Дополнительная услуга</h2>
       <div class="chk"><input type="checkbox" id="a_k5"><label for="a_k5" style="margin:0;color:inherit">Построение системы</label></div>
       <details class="adesc">
         <summary>Что это</summary>
         <ol>
-          <li>Налаживаем бухгалтерский учёт и связанные с ним процессы.</li>
-          <li>Налаживаем управленческий учёт и процессы подготовки отчётности.</li>
+          <li>К работе можно приступить после подготовки бухгалтерской и управленческой отчётности.</li>
+          <li>Разбираем результаты отчётности и даём рекомендации.</li>
+          <li>Налаживаем бухгалтерский и управленческий учёт. Готовим регламенты для бухгалтера и сотрудника, отвечающего за финансы, и передаём готовую систему.</li>
+          <li>Результат — единый порядок работы, по которому команда из месяца в месяц получает отчётность и видит результаты работы бизнеса.</li>
         </ol>
       </details>
-      <div class="note">Стоимость и срок — по согласованию.</div>
+      <div class="note" id="a_system_terms"></div>
     </div>
     <div class="card">
       <h2>Стоимость аудита</h2>
       <div class="big" id="a_price">—</div>
-      <div class="sub" id="a_range"></div>
       <table id="a_tbl" style="margin-top:12px"></table>
     </div>
     <div class="card res"><div id="a_res"></div></div>
@@ -683,7 +672,7 @@ const DEF = {
   i_dds:15000, i_ost:5000, i_call:7000, i_chat:0, i_app:3000, i_hour_online:2500, i_plan:10000, i_call2:7000, i_goods:6000, i_hour:3500, i_hour_staff:2000,
   pk_disc:0,
   n1:3500, n3:8100, n6:15000, n12:20400,
-  au_k1:15000, ny_me:3500, ny_staff:2000, i_tbl:2000, i_office:2000, au_rush:30
+  au_k1:15000, au_system:10000, ny_me:3500, ny_staff:2000, i_tbl:2000, i_office:2000, au_rush:30
 };
 const LBL = {
   base_npd:"База: НПД, ₽",base_patent:"База: патент, ₽",base_ausn8:"База: АУСН доходы 8%, ₽",base_ausn15:"База: АУСН доходы−расходы 15%, ₽",base_usn6:"База: УСН доходы, ₽",base_usn15:"База: УСН доходы−расходы, ₽",base_osno:"База: ОСНО, ₽",
@@ -693,7 +682,7 @@ const LBL = {
   i_dds:"Состав: ДДС и ОПиУ каждый месяц, ₽",i_hour_staff:"Созвон или встреча с сотрудником, 1 час, ₽",i_hour_online:"Дополнительная встреча со мной онлайн, 1 час, ₽",i_ost:"Состав: контроль остатков дебиторки/кредиторки (платёжный календарь), ₽",i_call:"Созвон или встреча с отчётом владельцу и рекомендациями, 2 часа, ₽",i_chat:"Состав: вопросы и коммуникация в чате, ₽ (0 = бесплатно)",i_app:"Состав: доступ к приложению и боту НЕЙЛА, ₽",i_plan:"Контроль: бюджет и план-факт, ₽",i_call2:"Контроль: второй созвон в месяц (2 часа), ₽",i_hour:"Дополнительный час созвона или встречи, ₽",i_goods:"Доп к управленке: товарный учёт, ₽",
   pk_disc:"Скидка за пакет (Цифры, Контроль) от суммы услуг, %",
   n1:"НЕЙЛА 1 мес, ₽",n3:"НЕЙЛА 3 мес, ₽",n6:"НЕЙЛА 6 мес, ₽",n12:"НЕЙЛА 12 мес, ₽",
-  au_k1:"Аудит текущей бухгалтерии, фиксированная цена, ₽",ny_me:"НЕЙЛА: ежемесячный созвон со мной, ₽",ny_staff:"НЕЙЛА: ежемесячный созвон с сотрудником, ₽",au_tbl:"Аудит: анализ прочих таблиц, за одну таблицу, ₽",i_tbl:"Таблицы (создание/проверка/анализ), за одну, ₽",i_office:"Сборка цифрового офиса, ₽",au_rush:"Восстановление бухучёта: наценка за срочность, %"
+  au_k1:"Аудит текущей бухгалтерии, фиксированная цена, ₽",au_system:"Построение системы, разовая цена, ₽",ny_me:"НЕЙЛА: ежемесячный созвон со мной, ₽",ny_staff:"НЕЙЛА: ежемесячный созвон с сотрудником, ₽",au_tbl:"Аудит: анализ прочих таблиц, за одну таблицу, ₽",i_tbl:"Таблицы (создание/проверка/анализ), за одну, ₽",i_office:"Сборка цифрового офиса, ₽",au_rush:"Восстановление бухучёта: наценка за срочность, %"
 };
 let S = {...DEF};
 try {
@@ -949,7 +938,7 @@ function renderNeyla() {
 
 const AUDIT_TERMS = {
   current: "10 дней",
-  accounting: "Согласуем на созвоне и фиксируем в договоре",
+  accounting: "14 дней. Точный срок согласуем на созвоне и фиксируем в договоре",
   custom: "По согласованию"
 };
 
@@ -982,19 +971,13 @@ function calcAudit() {
     amount: S.i_dds * managementMonths, term: AUDIT_TERMS.custom,
     result: `ДДС и ОПиУ за ${managementMonths} мес.`
   });
-  if ($("a_k4").checked) services.push({
-    name: "Финансовый аудит бизнеса", amount: null, term: AUDIT_TERMS.custom,
-    result: "Бухгалтерская и управленческая отчётность с выводами и рекомендациями"
-  });
   if ($("a_k5").checked) services.push({
-    name: "Построение системы", amount: null, term: AUDIT_TERMS.custom,
-    result: "Налаженные процессы бухгалтерского и управленческого учёта"
+    name: "Построение системы", amount: S.au_system, term: AUDIT_TERMS.custom,
+    result: "Налаженный бухгалтерский и управленческий учёт, регламенты для бухгалтера и финансиста и понятный порядок подготовки отчётности каждый месяц"
   });
 
-  const total = services.reduce((sum, item) => sum + (item.amount ?? 0), 0);
-  const hasQuote = services.some(item => item.amount !== null);
-  const pending = services.some(item => item.amount === null);
-  return {services, total, hasQuote, pending, monthly, accounting, management, urgencyRate};
+  const total = services.reduce((sum, item) => sum + item.amount, 0);
+  return {services, total, monthly, accounting, management, urgencyRate};
 }
 
 function auditDetails(item) {
@@ -1008,15 +991,15 @@ function renderAudit() {
   $("a_accounting_rate").textContent = `Цена из вкладки «Бухгалтерия»: ${rub(a.monthly)} в месяц без налоговой надбавки.`;
   $("a_management_rate").textContent = `ДДС и ОПиУ: ${rub(S.i_dds)} за месяц.`;
   $("a_rushl").textContent = `Срочно (+${a.urgencyRate}% к восстановлению бухучёта)`;
-  $("a_price").innerHTML = a.hasQuote ? bigPrice(a.total)
-    : a.pending ? "По согласованию" : "Выбери вид аудита";
-  $("a_range").textContent = a.pending && a.hasQuote ? "Сумма по услугам с известной ценой." : "";
+  $("a_accounting_term").textContent = "Срок: " + AUDIT_TERMS.accounting + ".";
+  $("a_system_terms").textContent = `${rub(S.au_system)} разово. Срок — по согласованию.`;
+  $("a_price").innerHTML = a.services.length ? bigPrice(a.total) : "Выбери услугу";
   const list = a.services.map(item => {
     const details = auditDetails(item);
     const label = `${item.name}<div class="note">Срок: ${item.term}.${details ? "<br>" + details : ""}</div>`;
-    return [label, item.amount === null ? "По согласованию" : rub(item.amount)];
+    return [label, rub(item.amount)];
   });
-  if (a.hasQuote) list.push(...taxRows(a.total, "Итого, разово"));
+  if (a.services.length) list.push(...taxRows(a.total, "Итого, разово"));
   $("a_tbl").innerHTML = rows(list);
   $("a_res").innerHTML = resHTML(a.services.map(item => [item.name, item.result]), "Что вы получите");
 }
@@ -1067,8 +1050,7 @@ function listData(){
     ["Восстановление бухгалтерского учёта", "Месячная цена из «Бухгалтерии» × период", AUDIT_TERMS.accounting],
     ["Срочное восстановление бухгалтерского учёта", `+${Math.max(0,S.au_rush)}%`, "к стоимости восстановления"],
     ["Восстановление управленческого учёта (ДДС и ОПиУ)", rub(S.i_dds) + " за месяц", AUDIT_TERMS.custom],
-    ["Финансовый аудит бизнеса", AUDIT_TERMS.custom, AUDIT_TERMS.custom],
-    ["Построение системы", AUDIT_TERMS.custom, AUDIT_TERMS.custom]
+    ["Построение системы", rub(S.au_system) + " разово", AUDIT_TERMS.custom]
   );
   return [["Бухгалтерия",B],["Управленческий учёт",M],["НЕЙЛА",N],["Пакеты",P],["Аудит",A],["Режим работы",[[HOURS_NOTE,"",""]]]];
 }
@@ -1087,7 +1069,7 @@ const d0=new Date();$("sp_date").value=String(d0.getDate()).padStart(2,"0")+"."+
 let SPEC=null;
 function buildSpec(){
   const pk=$("sp_pk").value, c=calcBuh();
-  const secs=[]; let monthly=0, once=0, fixed=0, auditPending=false;
+  const secs=[]; let monthly=0, once=0, fixed=0;
   const R=(n,p,v,t)=>({n,p,v,t});
   const accOnce=()=>{
     const r=[];
@@ -1136,15 +1118,13 @@ function buildSpec(){
     if (a.services.length) {
       const rows = a.services.map(item => {
         const details = auditDetails(item);
-        return R(item.name + (details ? ` (${details})` : ""), "Срок: " + item.term, item.amount,
-          item.amount === null ? AUDIT_TERMS.custom : undefined);
+        return R(item.name + (details ? ` (${details})` : ""), "Срок: " + item.term, item.amount);
       });
       secs.push({t:"Аудит", rows});
       once += a.total;
-      auditPending = a.pending;
     }
   }
-  return {secs,monthly,once,fixed,auditPending,rate:taxRate(),tlab:taxLabel(),client:$("sp_client").value.trim(),no:$("sp_no").value.trim(),date:$("sp_date").value.trim(),exec:$("sp_exec").value.trim()};
+  return {secs,monthly,once,fixed,rate:taxRate(),tlab:taxLabel(),client:$("sp_client").value.trim(),no:$("sp_no").value.trim(),date:$("sp_date").value.trim(),exec:$("sp_exec").value.trim()};
 }
 const cost=r=>r.t||rub(r.v);
 function renderSpec(sp){
@@ -1156,7 +1136,7 @@ function renderSpec(sp){
   if(sp.once>0)addT("Итого разовые платежи и платежи за период","Итого к оплате: разовые платежи и платежи за период",sp.once);
   if(sp.fixed>0)tot.push(["Итого НЕЙЛА — фиксированный тариф, налог не начисляется",rub(sp.fixed),"tot"]);
   const tt=tot.length?`<table style="margin-top:14px">${tot.map(r=>`<tr class="${r[2]||""}"><td>${r[0]}</td><td></td><td>${r[1]}</td></tr>`).join("")}</table>`:"";
-  const nt=`<div class="note">${HOURS_NOTE}</div>`+(sp.auditPending?`<div class="note">Итоги рассчитаны по услугам с известной ценой. Услуги с ценой по согласованию указаны отдельно.</div>`:"");
+  const nt=`<div class="note">${HOURS_NOTE}</div>`;
   $("sp_doc").innerHTML=head+(sp.secs.length?body+tt+nt:"<div class='note'>Ничего не выбрано.</div>");
 }
 function specText(sp){
@@ -1165,7 +1145,6 @@ function specText(sp){
   sp.secs.forEach(s=>{t+=`\n${s.t.toUpperCase()}\n`+s.rows.map(r=>`- ${r.n} (${r.p}): ${cost(r)}`+((w=>w?`
     Включено: ${w[1].join(w[4])}.${w[2]?" "+w[2]:""}`:"")(WRAPS.find(x=>String(r.n).startsWith(x[0]))))).join("\n")+"\n"+(s.note?s.note+"\n":"")});
   t+="\n";const tl=(lab,pay,v)=>{if(sp.rate){const g=grossUp(v,sp.rate);t+=`Налог ${sp.rate}% (${sp.tlab}), включён в сумму: ${rub(g-v)}\n${pay}: ${rub(g)}\n`}else t+=`${lab}: ${rub(v)}\n`};if(sp.monthly>0)tl("Итого ежемесячно","Итого к оплате ежемесячно",sp.monthly);if(sp.once>0)tl("Итого разовые платежи и платежи за период","Итого к оплате: разовые платежи и платежи за период",sp.once);if(sp.fixed>0)t+=`Итого НЕЙЛА — фиксированный тариф, налог не начисляется: ${rub(sp.fixed)}\n`;
-  if(sp.auditPending)t+="Итоги рассчитаны по услугам с известной ценой. Услуги с ценой по согласованию указаны отдельно.\n";
   t+=HOURS_NOTE+"\n";
   return t;
 }
@@ -1455,7 +1434,7 @@ buildSettings();renderAll();
   const groups = [
     ["Бухгалтерия", ["add_kkt", "add_wh_serv", "add_wh", "add_wh_mix", "base_npd", "base_patent", "base_ausn8", "base_ausn15", "base_usn6", "base_usn15", "base_osno", "add_ooo", "ops_rate", "emp_rate", "add_vat", "add_vat_usn", "add_vat_mix", "add_ved", "add_mp", "one_c", "c1_t1", "c1_t2", "c1_t3", "c1_t4"]],
     ["Управленческий учёт", ["i_dds", "i_ost", "i_call", "i_chat", "i_app", "i_plan", "i_call2", "i_goods", "i_hour", "i_hour_online", "i_hour_staff", "i_tbl", "i_office"]],
-    ["Аудит", ["au_k1"]],
+    ["Аудит", ["au_k1", "au_system"]],
     ["НЕЙЛА", ["n1", "n3", "n6", "n12", "ny_me", "ny_staff"]]
   ];
   const overrides = {
