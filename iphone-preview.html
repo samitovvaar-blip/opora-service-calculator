@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Предпросмотр на iPhone · ОПОРА</title>
+  <title>Предпросмотр на iPhone 16 Pro Max · ОПОРА</title>
   <style>
     * { box-sizing: border-box; }
     body {
@@ -30,31 +30,33 @@
     a { color: #234774; text-underline-offset: 3px; }
     .stage { display: grid; place-items: center; min-width: 0; }
     .phone {
-      width: 406px;
-      padding: 10px 8px 11px;
+      width: 458px;
+      padding: 8px 7px 9px;
+      position: relative;
+      border: 2px solid #aaa094;
       zoom: var(--preview-scale, 1);
-      border-radius: 48px;
-      background: #101722;
+      border-radius: 62px;
+      background: #101114;
       box-shadow: 0 18px 44px rgb(20 31 51 / 24%), inset 0 0 0 1px #475264;
     }
     .status-bar {
-      height: 28px;
+      height: 36px;
       display: grid;
       place-items: center;
     }
     .status-bar::after {
       content: "";
-      width: 102px;
-      height: 18px;
+      width: 118px;
+      height: 26px;
       border-radius: 24px;
       background: #05070b;
     }
     iframe {
       display: block;
-      width: 390px;
-      height: 844px;
+      width: 440px;
+      height: 956px;
       border: 0;
-      border-radius: 32px;
+      border-radius: 46px;
       background: white;
     }
     .home-bar {
@@ -64,6 +66,8 @@
       border-radius: 8px;
       background: #d2d8e1;
     }
+    .unavailable { max-width: 240px; margin: 0; padding: 18px; }
+    [hidden] { display: none !important; }
     :focus-visible { outline: 3px solid #d98d42; outline-offset: 3px; }
   </style>
 </head>
@@ -78,6 +82,7 @@
       <iframe id="preview" title="Мобильный предпросмотр" allow="clipboard-write"></iframe>
       <div class="home-bar" aria-hidden="true"></div>
     </div>
+    <p class="unavailable" id="unavailable" hidden>Сайт открывается в отдельной вкладке по ссылке выше. Его настройки запрещают встраивание.</p>
   </main>
   <script>
     const pages = new Map([
@@ -88,21 +93,26 @@
     const heading = document.getElementById("preview-title");
     const original = document.getElementById("original-link");
     const preview = document.getElementById("preview");
+    const phone = preview.closest(".phone");
+    const unavailable = document.getElementById("unavailable");
 
     function fitPhone() {
       const availableHeight = window.innerHeight - heading.parentElement.offsetHeight - 34;
       const availableWidth = window.innerWidth - 24;
-      const scale = Math.max(0.25, Math.min(1, availableWidth / 406, availableHeight / 905));
+      const scale = Math.max(0.25, Math.min(1, availableWidth / 458, availableHeight / 1025));
       document.documentElement.style.setProperty("--preview-scale", scale);
     }
 
     function showPage() {
       const page = pages.get(location.hash.slice(1)) ?? pages.get("calculator");
-      document.title = page.name + " на iPhone · ОПОРА";
-      heading.textContent = page.name + " · iPhone 390 × 844";
+      document.title = page.name + " на iPhone 16 Pro Max · ОПОРА";
+      heading.textContent = page.name + " · iPhone 16 Pro Max";
       original.href = page.url;
       preview.title = page.name + " ОПОРА";
-      preview.src = page.url;
+      const canEmbed = page !== pages.get("site");
+      phone.hidden = !canEmbed;
+      unavailable.hidden = canEmbed;
+      if (canEmbed) preview.src = page.url;
       fitPhone();
     }
 
