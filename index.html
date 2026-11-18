@@ -201,8 +201,10 @@ td > details { margin: 0; }
 .set { display: grid; grid-template-columns: minmax(0, 1fr) minmax(65px, 110px); align-items: center; gap: 8px 12px; margin-top: 14px; font-size: 13px; }
 .doc { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: clamp(14px, 3vw, 26px); margin-top: 14px; }
 .doc h3 { margin: 0 0 4px; font-size: 20px; }
-.doc .meta { color: var(--mut); margin-bottom: 14px; overflow-wrap: anywhere; }
+.doc .meta { color: var(--mut); margin-bottom: 14px; }
 .doc h4, .lst h4 { margin: 18px 0 6px; font-size: 15px; }
+.spec-table { overflow-x: auto; }
+.doc td { overflow-wrap: normal; word-break: normal; }
 .doc table td:nth-child(2), .lst table td:nth-child(3) { color: var(--mut); font-size: 12px; padding-inline: 8px; text-align: left; }
 .lst table td:nth-child(2) { padding-inline: 8px; text-align: right; font-variant-numeric: tabular-nums; }
 @media (max-width: 1000px) {
@@ -228,6 +230,8 @@ td > details { margin: 0; }
   .wrap { padding: 0; }
   .side, .page-header, details, .noprint { display: none !important; }
   .doc { border: 0; padding: 0; margin: 0; }
+  .spec-table { overflow: visible; }
+  .doc tr { break-inside: avoid; }
 }
 
 .one-off-service {
@@ -1098,6 +1102,9 @@ function buildSpec(){
   const pk=$("sp_pk").value, c=calcBuh();
   const secs=[]; let monthly=0, once=0, fixed=0;
   const R=(n,p,v,t)=>({n,p,v,t});
+  const subtotal = (label, amount) => ({...R(label, "ежемесячно", amount), subtotal: true});
+  const accountingTotal = amount => subtotal("Итого бухгалтерское обслуживание", amount);
+  const managementTotal = amount => subtotal("Итого управленческий учёт", amount);
   const accOnce=()=>{
     const r=[];
     if(c.onec>0){r.push(R(`Заведение базы 1С (${c.ents} шт.)`,"разово",c.onec));once+=c.onec}
@@ -1113,32 +1120,39 @@ function buildSpec(){
     rows.push(S.i_chat ? R("Вопросы и коммуникация в чате", "входит в пакет", null, `отдельно ${rub(S.i_chat)}`)
       : R("Вопросы и коммуникация в чате", "—", null, "бесплатно"));
     if (!acc) rows.push(R("Коммуникация с текущей бухгалтерией", "—", null, "бесплатно"));
+    rows.push(managementTotal(pack.management));
     secs.push({t: `Пакет «${name}» (управленческий учёт)`, rows});
     if (acc) {
       const accountingRows = c.nums.map(([label, amount]) => R(label, "ежемесячно", amount));
       accountingRows.push(R(accountingCallLabel(c), "ежемесячно", c.callV));
+      accountingRows.push(accountingTotal(accounting));
       secs.push({t:"Бухгалтерское обслуживание (по расчёту клиента)", rows: accountingRows});
       const setup = accOnce();
       if (setup.length) secs.push({t:"Разовые услуги", rows: setup});
     }
-    const pricing = [R("Управленческий учёт", "ежемесячно", pack.management)];
-    if (acc) pricing.push(R("Бухгалтерия — по расчёту клиента", "ежемесячно", accounting));
-    pricing.push(
+    const pricing = [
       R("Общая стоимость до скидки", "ежемесячно", pack.subtotal),
       R(`Скидка за пакет ${pack.discountRate}%`, "ежемесячно", -pack.discount),
       R("Стоимость со скидкой", "ежемесячно", pack.total)
-    );
+    ];
     secs.push({t:"Стоимость пакета", rows: pricing});
     monthly += pack.total;
   }else{
     if($("sp_b").checked){
-      secs.push({t:"Бухгалтерское обслуживание",rows:c.nums.map(x=>R(x[0],"ежемесячно",x[1])).concat([R("Вопросы и коммуникация в чате","—",null,"бесплатно")],(c.callV>0&&!$("sp_m").checked)?[R(`Созвон ${whoTxt(c.staff,c.online)}: ${c.callH} ч в месяц`,"ежемесячно",c.callV)]:[])});monthly+=c.m+((c.callV>0&&!$("sp_m").checked)?c.callV:0);
+      const rows = c.nums.map(([label, amount]) => R(label, "ежемесячно", amount));
+      rows.push(R("Вопросы и коммуникация в чате", "—", null, "бесплатно"));
+      const call = c.callV > 0 && !$("sp_m").checked ? c.callV : 0;
+      if (call) rows.push(R(accountingCallLabel(c), "ежемесячно", call));
+      rows.push(accountingTotal(c.m + call));
+      secs.push({t:"Бухгалтерское обслуживание", rows});
+      monthly += c.m + call;
       const o=accOnce();if(o.length)secs.push({t:"Разовые услуги по бухгалтерии",rows:o});
     }
     if($("sp_m").checked){
       const m=getMgmt();
       const rows=m.lines.map(x=>R(x[0],"ежемесячно",x[1]));
       [["Вопросы и коммуникация в чате",S.i_chat,"бесплатно"]].forEach(x=>rows.push(x[1]===0?R(x[0],"—",null,x[2]):R(x[0],"ежемесячно",x[1])));
+      rows.push(managementTotal(m.sum + S.i_chat));
       secs.push({t:"Управленческий учёт",rows});monthly+=m.sum+S.i_chat;
       if(m.ext.length){secs.push({t:"Разовые допуслуги управленческого учёта",rows:m.ext.map(x=>R(x[0],"разово",x[1]))});once+=m.ext.reduce((a,x)=>a+x[1],0)}
     }
@@ -1169,15 +1183,17 @@ function buildSpec(){
   return {secs,monthly,once,fixed,rate:taxRate(),tlab:taxLabel(),client:$("sp_client").value.trim(),no:$("sp_no").value.trim(),date:$("sp_date").value.trim(),exec:$("sp_exec").value.trim()};
 }
 const cost=r=>r.t||rub(r.v);
+const keepSpecAmounts = text => text.replace(/-?\d+(?:[ \u00a0\u202f]\d{3})*[ \u00a0\u202f]₽/g,
+  amount => amount.replace(/ /g, "\u00a0"));
 function renderSpec(sp){
   const head=`<h3>Спецификация${sp.no?" № "+sp.no:""}${sp.date?" от "+sp.date:""}</h3><div class="meta">${sp.exec?"Исполнитель: "+sp.exec+"<br>":""}${sp.client?"Клиент: "+sp.client:""}</div>`;
-  const body=sp.secs.map(s=>`<h4>${s.t}</h4><table>${s.rows.map(r=>`<tr><td>${c1wrap(r.n)}</td><td>${r.p}</td><td>${cost(r)}</td></tr>`).join("")}</table>${s.note?`<div class="note">${s.note}</div>`:""}`).join("");
+  const body=sp.secs.map(s=>`<h4>${s.t}</h4><div class="spec-table"><table>${s.rows.map(r=>`<tr${r.subtotal?' class="tot"':""}><td>${keepSpecAmounts(c1wrap(r.n))}</td><td>${r.p}</td><td>${keepSpecAmounts(cost(r))}</td></tr>`).join("")}</table></div>${s.note?`<div class="note">${s.note}</div>`:""}`).join("");
   const tot=[];
   const addT=(lab,pay,v)=>{if(sp.rate){const g=grossUp(v,sp.rate);tot.push([`Налог ${sp.rate}% (${sp.tlab}), включён в сумму`,rub(g-v),""]);tot.push([pay,rub(g),"tot"])}else tot.push([lab,rub(v),"tot"])};
   if(sp.monthly>0)addT("Итого ежемесячно","Итого к оплате ежемесячно",sp.monthly);
   if(sp.once>0)addT("Итого разовые платежи и платежи за период","Итого к оплате: разовые платежи и платежи за период",sp.once);
   if(sp.fixed>0)tot.push(["Итого НЕЙЛА — фиксированный тариф, налог не начисляется",rub(sp.fixed),"tot"]);
-  const tt=tot.length?`<table style="margin-top:14px">${tot.map(r=>`<tr class="${r[2]||""}"><td>${r[0]}</td><td></td><td>${r[1]}</td></tr>`).join("")}</table>`:"";
+  const tt=tot.length?`<div class="spec-table" style="margin-top:14px"><table>${tot.map(r=>`<tr class="${r[2]||""}"><td>${r[0]}</td><td></td><td>${keepSpecAmounts(r[1])}</td></tr>`).join("")}</table></div>`:"";
   const nt=`<div class="note">${HOURS_NOTE}</div>`;
   $("sp_doc").innerHTML=head+(sp.secs.length?body+tt+nt:"<div class='note'>Ничего не выбрано.</div>");
 }
