@@ -198,8 +198,12 @@ td:last-child { padding-inline-start: 8px; text-align: right; font-variant-numer
 td > details { margin: 0; }
 .tot td { border-bottom: 0; padding-top: 10px; font-weight: 750; }
 .sec td { padding: 7px 9px; border: 0; background: var(--acc2); color: var(--acc); font-size: 12px; font-weight: 750; }
-.sec.sb td { background: #ffecd8; color: #783b10; }
 .sec.sd td { background: #e6f4eb; color: var(--ok); }
+.package-breakdown { margin: 12px 0 0; }
+.package-breakdown summary { padding: 8px 10px; border-radius: 8px; background: var(--acc2); color: var(--acc); }
+.package-breakdown.accounting summary { background: #ffecd8; color: #783b10; }
+.package-breakdown summary strong { white-space: nowrap; }
+.package-breakdown > a { display: inline-block; margin-top: 8px; font-size: 13px; }
 .settings { margin-top: 18px; }
 .set { display: grid; grid-template-columns: minmax(0, 1fr) minmax(65px, 110px); align-items: center; gap: 8px 12px; margin-top: 14px; font-size: 13px; }
 .doc { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: clamp(14px, 3vw, 26px); margin-top: 14px; }
@@ -415,6 +419,10 @@ td > details { margin: 0; }
       </select>
       <h2 id="m_baseh" style="margin-top:16px">Состав тарифа</h2>
       <div id="m_base"></div>
+      <div id="m_addons" class="hide">
+        <h2 style="margin-top:16px">Ежемесячные допуслуги</h2>
+        <div id="m_addon_options"></div>
+      </div>
       <label style="margin-top:6px">Созвоны и встречи: кто проводит</label><select id="m_who"><option value="me">Со мной</option><option value="staff">С моим сотрудником</option></select>
       <label style="margin-top:6px">Формат дополнительных встреч (со мной): офлайн или онлайн</label><select id="m_fmt"><option value="off">Офлайн</option><option value="on">Онлайн</option></select>
       <div class="row" style="margin-top:6px">
@@ -444,7 +452,7 @@ td > details { margin: 0; }
   <!-- ПАКЕТЫ -->
   <div id="t-pack" class="hide">
     <div class="card" style="margin:0 0 14px"><label style="margin-top:0">Бухгалтерия клиента</label><select id="p_acc"><option value="our">Бухгалтерию ведём мы (по расчёту клиента из вкладки «Бухгалтерия»)</option><option value="own">Бухгалтерия не нужна — только управленка</option></select>
-      <div class="note">Пакет — это управленческий учёт. Цифры: базовый управленческий учёт. Контроль: всё из Цифр, а также бюджет и план-факт, второй созвон со мной и товарный учёт (всего 2 созвона со мной в месяц). Бухгалтерия добавляется по расчёту клиента. Скидка применяется к общей месячной стоимости пакета.</div></div>
+      <div class="note">Бухгалтерия берётся из расчёта клиента во вкладке «Бухгалтерия». Скидка применяется к общей месячной стоимости пакета.</div></div>
     <div class="grid">
       <div class="card" id="pk1"></div>
       <div class="card" id="pk2"></div>
@@ -574,7 +582,7 @@ td > details { margin: 0; }
         <div><label for="sp_exec">Исполнитель</label><input type="text" id="sp_exec" value="ОПОРА"></div>
       </div>
       <label>Пакет</label>
-      <select id="sp_pk"><option value="none">Без пакета (услуги по отдельности)</option><option value="1">ОПОРА-Цифры</option><option value="2">ОПОРА-Контроль</option></select>
+      <select id="sp_pk"><option value="none">Без пакета (услуги по отдельности)</option><option value="1">Пакет «Опора Цифры»</option><option value="2">Пакет «Опора Контроль»</option></select>
       <div id="sp_sep">
         <div class="chk"><input type="checkbox" id="sp_b" checked><label style="margin:0;color:inherit">Бухгалтерия (вкладка «Бухгалтерия»)</label></div>
         <div class="chk"><input type="checkbox" id="sp_m"><label style="margin:0;color:inherit">Управленческий учёт (вкладка «Управленческий учёт»)</label></div>
@@ -889,12 +897,7 @@ function renderBuh(){
   $("b_price").innerHTML=bigPrice(mt," / мес");
   $("b_range").textContent=`Вилка: ${rub(r500(mt*(1-sp)))} – ${rub(r500(mt*(1+sp)))}`;
   $("b_level").innerHTML=`<span class="pill ${L[1]}">Уровень: ${L[0]}</span>`+(c.operations.warning?` <span class="pill warn">${c.operations.warning}</span>`:"");
-  const t=c.items.map(x=>[c1wrap(x[0]),x[1]]);
-  t.push(["Вопросы и коммуникация в чате","бесплатно"]);
-  t.push([`Созвон ${whoTxt(c.staff,c.online)}: ${c.callH} ч в месяц (1 час — ${rub(hrRate(c.staff,c.online))})`,rub(c.callV)]);
-  taxRows(mt,"Итого в месяц").forEach(r=>t.push(r));
-  if(c.onec>0)t.push([`Разово: заведение базы 1С (${c.ents} шт.)`,rub(c.onec),"tot"]);
-  $("b_tbl").innerHTML=rows(t);
+  $("b_tbl").innerHTML=rows(accountingPriceRows(c));
   {const R=[["Учёт за месяц","операции отражены, первичные документы обработаны, налоги рассчитаны, отчётность сдана в срок"]];
    if($("b_pay").value==="1"&&c.emp>0)R.push(["Расчёт зарплаты и отчётность",PAYROLL_SCOPE.join(" ")]);
    if(c.hrOn&&c.emp>0)R.push(["Кадровый учёт",HR_SCOPE.join(" ")]);
@@ -912,18 +915,22 @@ function renderBuh(){
 
 const MG=[["dds","ДДС и ОПиУ каждый месяц","i_dds"],["ost","Платёжный календарь","i_ost"],["call","Созвон или личная встреча со мной: отчёт владельцу и рекомендации (2 часа в месяц)","i_call"],["plan","Бюджет и план-факт","i_plan"],["call2","Второй созвон или встреча со мной в месяц (2 часа)","i_call2"],["goods","Товарный учёт","i_goods"],["app","Доступ к приложению и боту НЕЙЛА","i_app"]];
 const PK1=["dds","ost","call","app"], PK2=["dds","ost","call","app","plan","call2","goods"];
-function calcPackage(keys, accounting) {
-  const items = MG.filter(service => keys.includes(service[0])).map(([, name, rate]) => [name, S[rate]]);
-  const management = items.reduce((total, [, amount]) => total + amount, S.i_chat);
+function calcPackage(planKey, accounting) {
+  const {plan, lines: items, sum} = getMgmt(planKey);
+  const management = sum + S.i_chat;
   const subtotal = management + accounting;
   const discountRate = Math.min(100, Math.max(0, S.pk_disc));
   const discount = Math.round(subtotal * discountRate / 100);
-  return {items, management, subtotal, discountRate, discount, total: subtotal - discount};
+  return {plan, items, management, subtotal, discountRate, discount, total: subtotal - discount};
 }
 const MG_PLANS = {
   digits: {name: "Опора Цифры", detail: "стандартный управленческий учёт", keys: PK1},
   control: {name: "Опора Контроль", detail: "полный управленческий учёт", keys: PK2, team: true}
 };
+const MG_ADDONS = MG.filter(([key]) => PK2.includes(key) && !PK1.includes(key));
+$("m_addon_options").innerHTML = MG_ADDONS.map(([key]) =>
+  `<div class="chk"><input type="checkbox" id="m_extra_${key}"><label for="m_extra_${key}" id="m_extra_label_${key}" style="margin:0;color:inherit"></label></div>`
+).join("");
 const MG_TEAM = ["Коммуникация с командой клиента", "уточняем данные и вопросы по отчётности у сотрудников клиента"];
 const whoM=()=>$("m_who").value==="staff";
 const hrRate=(st,on)=>st?S.i_hour_staff:(on?S.i_hour_online:S.i_hour);
@@ -935,13 +942,19 @@ const freeRow=(n,v)=>[n,v===0?"бесплатно":rub(v)];
 function renderMgmt(){
   const {plan, services, lines, sum: serviceTotal, ext} = getMgmt();
   const sum = serviceTotal + S.i_chat;
-  const included = services.map(service => {
+  const included = services.filter(([key]) => plan.keys.includes(key)).map(service => {
     const [name, amount] = mgv(service);
     return c1wrap(name, rub(amount));
   });
   if (plan.team) included.push(MG_TEAM[0] + " — включено");
   $("m_baseh").textContent = "Что входит в «" + plan.name + "»";
   $("m_base").innerHTML = included.map(item => `<div class="chk" style="margin:6px 0"><span aria-hidden="true" style="color:var(--ok)">✓</span><span>${item}</span></div>`).join("");
+  const showAddons = plan === MG_PLANS.digits;
+  $("m_addons").classList.toggle("hide", !showAddons);
+  for (const service of MG_ADDONS) {
+    const [name, amount] = mgv(service);
+    $("m_extra_label_" + service[0]).textContent = `${name} — ${rub(amount)}/мес.`;
+  }
 
   const hrs = num("m_hrs");
   $("m_hrsnote").textContent = `Каждый дополнительный час — ${rub(hrRate(whoM(),onM()))} (${whoTxt(whoM(),onM())}). Базовый созвон или встреча (2 часа) включает отчёт владельцу и рекомендации.`;
@@ -973,39 +986,47 @@ function renderMgmt(){
 function accountingCallLabel(c) {
   return `Созвон ${whoTxt(c.staff,c.online)}: ${c.callH} ч в месяц`;
 }
+function accountingPriceRows(c) {
+  const items = c.items.map(([label, value]) => [c1wrap(label), value]);
+  items.push(["Вопросы и коммуникация в чате", "бесплатно"]);
+  items.push([`${accountingCallLabel(c)} (1 час — ${rub(hrRate(c.staff,c.online))})`, rub(c.callV)]);
+  items.push(...taxRows(accountingMonthly(c), "Итого в месяц"));
+  if (c.onec > 0) items.push([`Разово: заведение базы 1С (${c.ents} шт.)`, rub(c.onec), "tot"]);
+  return items;
+}
 
-function packCard(el, name, keys, c, acc) {
+function packCard(el, planKey, c, acc) {
   const accounting = acc ? accountingMonthly(c) : 0;
-  const pack = calcPackage(keys, accounting);
-  const t = [["Управленческий учёт", "", "sec sm"]];
-  t.push(...pack.items.map(([label, amount]) => [c1wrap(label), rub(amount)]));
-  t.push(freeRow("Вопросы и коммуникация в чате", S.i_chat));
-  if (!acc) t.push(["Коммуникация с текущей бухгалтерией", "бесплатно"]);
-  t.push(["Итого управленческий учёт", rub(pack.management), "tot"]);
-
-  if (acc) {
-    const detail = c.items.filter(row => row[0] !== c.payrollExtraLabel && row[1] !== "")
-      .map(([label, value]) => `<div style="display:flex;justify-content:space-between;gap:10px;font-size:13px;color:var(--mut);padding:2px 0 2px 14px"><span>${c1wrap(label)}</span><span>${value}</span></div>`).join("");
-    t.push(["Бухгалтерия — стоимость по расчёту клиента", "", "sec sb"]);
-    t.push([`<details><summary>Бухгалтерия, налоги, отчётность ▾</summary>${detail}</details>`, rub(Math.max(0, c.m - c.pay))]);
-    if (c.pay > 0) t.push([c.payrollExtraLabel, rub(c.pay)]);
-    t.push([accountingCallLabel(c), rub(c.callV)]);
-    t.push(["Итого бухгалтерия", rub(accounting), "tot"]);
-  }
-
-  t.push([acc ? "Управленческий учёт + бухгалтерия" : "Стоимость до скидки", rub(pack.subtotal), "tot"]);
+  const pack = calcPackage(planKey, accounting);
+  const rate = taxRate();
+  const managementRows = pack.items.map(([label, amount]) => [c1wrap(label), rub(amount)]);
+  managementRows.push(freeRow("Вопросы и коммуникация в чате", S.i_chat));
+  if (pack.plan.team) managementRows.push([MG_TEAM[0], "включено"]);
+  if (!acc) managementRows.push(["Коммуникация с текущей бухгалтерией", "бесплатно"]);
+  managementRows.push(...taxRows(pack.management, "Итого в месяц"));
+  const managementSection = `<details class="package-breakdown">
+    <summary>Управленческий учёт «${pack.plan.name}» — <strong>${rub(rate ? grossUp(pack.management, rate) : pack.management)}/мес.</strong></summary>
+    <table>${rows(managementRows)}</table>
+    <a href="?tab=mgmt&amp;plan=${planKey}" data-package-tab="mgmt" data-plan="${planKey}">Открыть управленческий учёт</a>
+  </details>`;
+  const accountingSection = acc ? `<details class="package-breakdown accounting">
+    <summary>Бухгалтерия — <strong>${rub(rate ? grossUp(accounting, rate) : accounting)}/мес.</strong></summary>
+    <table>${rows(accountingPriceRows(c))}</table>
+    <a href="?tab=buh" data-package-tab="buh">Открыть расчёт бухгалтерии</a>
+  </details>` : "";
+  const t = [[rate ? "Общая стоимость до скидки и налога" : "Общая стоимость до скидки", rub(pack.subtotal), "tot"]];
   t.push([`Скидка за пакет ${pack.discountRate}%`, pack.discount ? "−" + rub(pack.discount) : rub(0), "sec sd"]);
   if (taxRate()) t.push(["Стоимость со скидкой до налоговой надбавки", rub(pack.total), "tot"]);
   t.push(...taxRows(pack.total, "Итого со скидкой в месяц"));
   const warning = acc && c.operations.warning ? c.operations.warning + " " : "";
-  el.innerHTML = `<h2>${name}</h2><div class="big">${bigPrice(pack.total," / мес")}</div><table style="margin-top:12px">${rows(t)}</table><div class="note">${warning}Для постов: ≈ ${rub(pack.total / 30)} в день.</div>`;
+  el.innerHTML = `<h2>Пакет «${pack.plan.name}»</h2><div class="big">${bigPrice(pack.total," / мес")}</div>${managementSection}${accountingSection}<table style="margin-top:12px">${rows(t)}</table><div class="note">${warning}Для постов: ≈ ${rub(pack.total / 30)} в день.</div>`;
 }
 
 function renderPack() {
   const c = calcBuh();
   const acc = $("p_acc").value === "our";
-  packCard($("pk1"), "ОПОРА-Цифры", PK1, c, acc);
-  packCard($("pk2"), "ОПОРА-Контроль", PK2, c, acc);
+  packCard($("pk1"), "digits", c, acc);
+  packCard($("pk2"), "control", c, acc);
 }
 
 const NEYLA_CABINETS = {
@@ -1155,9 +1176,10 @@ addRow("ip","usn6");addRow("ooo","usn6");
 $("g_add").onclick=()=>{addRow("ip","usn6");renderAll()};
 $("g_rows").addEventListener("click",e=>{if(e.target.classList.contains("gx")){e.target.closest(".grow").remove();renderAll()}});
 $("g_rows").addEventListener("change",e=>{if(e.target.classList.contains("gf")){e.target.closest(".grow").querySelector(".gr").classList.toggle("hide",e.target.value==="self")}});
-function getMgmt(){
-  const plan = MG_PLANS[$("m_plan_choice").value];
-  const services = MG.filter(service => plan.keys.includes(service[0]));
+function getMgmt(planKey = $("m_plan_choice").value){
+  const plan = MG_PLANS[planKey];
+  const addons = plan === MG_PLANS.digits ? MG_ADDONS.filter(([key]) => $("m_extra_" + key).checked) : [];
+  const services = MG.filter(service => plan.keys.includes(service[0]) || addons.includes(service));
   const lines = services.map(mgv);
   const hours = num("m_hrs");
   if (hours > 0) {
@@ -1222,6 +1244,9 @@ function listData(){
     if (plan.team) scope.push(MG_TEAM[0] + " — включено");
     M.push([`${plan.name} — ${plan.detail}`, rub(total), "в месяц", scope]);
   }
+  for (const [, label, rate] of MG_ADDONS) {
+    M.push([`${label} (допуслуга для «Опора Цифры»)`, rub(S[rate]), "в месяц"]);
+  }
   M.push(["Прочие таблицы: создание, проверка или анализ (за одну таблицу)",rub(S.i_tbl),"разово"],["Сборка цифрового офиса (документы и таблицы всех отделов, структурированно)",rub(S.i_office),"разово"]);
   M.push(["Платёжный календарь включает: "+PC_LIST.join(", "),"",""]);
   M.push(["Дополнительный час встречи со мной офлайн (оплачивается отдельно)",rub(S.i_hour),"за час"],["Дополнительный час встречи со мной онлайн",rub(S.i_hour_online),"за час"],["Созвон или встреча (2 часа) с моим сотрудником вместо созвона со мной",rub(S.i_hour_staff*2),"в месяц"],["Дополнительный час созвона или встречи с сотрудником",rub(S.i_hour_staff),"за час"]);
@@ -1236,15 +1261,16 @@ function listData(){
   }
   N.push(["Настройка шаблона и приложения","🎁 в подарок",""],["Первичный созвон, консультация (как работать с приложением, какие показатели смотреть)","🎁 в подарок",""],["Созвон раз в месяц: итоги результата месяца — со мной",rub(S.ny_me),"в месяц"],["Созвон раз в месяц: итоги результата месяца — с сотрудником",rub(S.ny_staff),"в месяц"]);
   const packageAccounting = $("p_acc").value === "our" ? accountingMonthly(calcBuh()) : 0;
-  for (const [name, keys] of [["ОПОРА-Цифры", PK1], ["ОПОРА-Контроль", PK2]]) {
-    const pack = calcPackage(keys, packageAccounting);
-    const services = pack.items.map(([label]) => label).join("; ");
+  for (const planKey of Object.keys(MG_PLANS)) {
+    const pack = calcPackage(planKey, packageAccounting);
+    const services = pack.items.map(([label]) => label);
+    if (pack.plan.team) services.push(MG_TEAM[0]);
     P.push(
-      [name + " — со скидкой", rub(pack.total), "в месяц"],
-      ["Управленческий учёт", rub(pack.management), "в месяц"],
-      ["Состав: " + services, "", ""]
+      [`Пакет «${pack.plan.name}» — со скидкой`, rub(pack.total), "в месяц, до налога"],
+      [`Управленческий учёт «${pack.plan.name}»`, rub(pack.management), "в месяц, до налога"],
+      ["Состав: " + services.join("; "), "", ""]
     );
-    if ($("p_acc").value === "our") P.push(["Бухгалтерия — стоимость по расчёту клиента", rub(packageAccounting), "в месяц"]);
+    if ($("p_acc").value === "our") P.push(["Бухгалтерия — стоимость по расчёту клиента", rub(packageAccounting), "в месяц, до налога"]);
     P.push(["Общая стоимость до скидки", rub(pack.subtotal), "в месяц"],
       [`Скидка за пакет ${pack.discountRate}%`, pack.discount ? "−" + rub(pack.discount) : rub(0), "в месяц"]);
   }
@@ -1289,17 +1315,17 @@ function buildSpec(){
     return r;
   };
   if (pk !== "none") {
-    const keys = pk === "1" ? PK1 : PK2;
-    const name = pk === "1" ? "ОПОРА-Цифры" : "ОПОРА-Контроль";
+    const planKey = pk === "1" ? "digits" : "control";
     const acc = $("p_acc").value === "our";
     const accounting = acc ? accountingMonthly(c) : 0;
-    const pack = calcPackage(keys, accounting);
+    const pack = calcPackage(planKey, accounting);
     const rows = pack.items.map(([label, amount]) => R(label, "входит в пакет", null, `отдельно ${rub(amount)}`));
     rows.push(S.i_chat ? R("Вопросы и коммуникация в чате", "входит в пакет", null, `отдельно ${rub(S.i_chat)}`)
       : R("Вопросы и коммуникация в чате", "—", null, "бесплатно"));
     if (!acc) rows.push(R("Коммуникация с текущей бухгалтерией", "—", null, "бесплатно"));
+    if (pack.plan.team) rows.push(R(MG_TEAM[0], "ежемесячно", 0, "включено"));
     rows.push(managementTotal(pack.management));
-    secs.push({t: `Пакет «${name}» (управленческий учёт)`, rows});
+    secs.push({t: `Пакет «${pack.plan.name}» (управленческий учёт)`, rows});
     if (acc) {
       const accountingRows = c.nums.map(([label, amount, text]) => R(label, "ежемесячно", amount, text));
       accountingRows.push(R(accountingCallLabel(c), "ежемесячно", c.callV));
@@ -1402,8 +1428,22 @@ function showServiceTab(selected) {
 for (const tab of serviceTabs) {
   tab.addEventListener("click", () => showServiceTab(tab.dataset.t));
 }
-const requestedTab = new URLSearchParams(location.search).get("tab");
+const serviceParams = new URLSearchParams(location.search);
+const requestedTab = serviceParams.get("tab");
+const requestedPlan = serviceParams.get("plan");
+if (requestedTab === "mgmt" && Object.hasOwn(MG_PLANS, requestedPlan)) $("m_plan_choice").value = requestedPlan;
 showServiceTab(serviceTabs.some(tab => tab.dataset.t === requestedTab) ? requestedTab : "buh");
+$("t-pack").addEventListener("click", event => {
+  const link = event.target.closest("a[data-package-tab]");
+  if (!link || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
+  event.preventDefault();
+  if (link.dataset.plan) {
+    $("m_plan_choice").value = link.dataset.plan;
+    renderMgmt();
+  }
+  showServiceTab(link.dataset.packageTab);
+  serviceTabs.find(tab => tab.dataset.t === link.dataset.packageTab).focus();
+});
 document.addEventListener("input",e=>{if(!e.target.closest("#settings, #worklog-form"))renderAll()});
 
 // настройки
