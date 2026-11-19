@@ -117,6 +117,8 @@ h1 { margin: 0; font-size: clamp(24px, 4vw, 34px); line-height: 1.2; letter-spac
 }
 .tax-control label { margin: 0; font-size: 12px; }
 .tax-control select { min-height: 34px; padding-block: 5px; }
+.spec-shortcut { grid-column: 1 / -1; display: flex; justify-content: flex-end; padding: 8px 0 20px; }
+.spec-shortcut button { margin: 0; background: var(--acc); color: #fff; border-color: var(--acc); font-weight: 650; }
 
 .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
 .grid:has(> .res) {
@@ -330,10 +332,6 @@ td > details { margin: 0; }
       <div>
         <h1>Калькулятор стоимости услуг</h1>
         <div class="sub">Цены ориентировочные. Тарифы и коэффициенты можно изменить в настройках.</div>
-      </div>
-      <div class="tax-control">
-        <label for="g_tax">Налог на итог (кто платит)</label>
-        <select id="g_tax"><option value="ip" selected>ИП или ООО</option><option value="fl">Физлицо</option><option value="none">Без налога</option></select>
       </div>
     </header>
 
@@ -573,6 +571,10 @@ td > details { margin: 0; }
   <div id="t-spec" class="hide">
     <div class="card noprint">
       <h2>Что включить в спецификацию</h2>
+      <div class="tax-control">
+        <label for="g_tax">Налог на итог (кто платит)</label>
+        <select id="g_tax"><option value="ip" selected>ИП или ООО</option><option value="fl">Физлицо</option><option value="none">Без налога</option></select>
+      </div>
       <div class="row">
         <div><label for="sp_client">Клиент</label><input type="text" id="sp_client" placeholder="ИП Иванов И.И. / ООО «...»"></div>
         <div><label for="sp_no">Договор №</label><input type="text" id="sp_no"></div>
@@ -786,8 +788,8 @@ function managementExtras() {
   if ($("m_office").checked) extras.push(["Сборка цифрового офиса", S.i_office]);
   return extras;
 }
-function bigPrice(v,suf){const r=taxRate();suf=suf||"";if(!r)return rub(v)+suf;return `${rub(grossUp(v,r))}${suf} <span class="price-note">услуг на ${rub(v)} без налога</span>`}
-function taxRows(total,lab,skipNone){const r=taxRate();if(!r)return skipNone?[]:[[lab,rub(total),"tot"]];const g=grossUp(total,r);return [[`Налог ${r}% (${taxLabel()}), включён в сумму`,rub(g-total)],[lab.startsWith("Итого")?lab.replace("Итого","Итого к оплате"):"К оплате: "+lab.charAt(0).toLowerCase()+lab.slice(1),rub(g),"tot"]]}
+function bigPrice(v,suf){return rub(v)+(suf||"")}
+function taxRows(total,lab,skipNone){return skipNone?[]:[[lab,rub(total),"tot"]]}
 function plEmp(n){const a=n%100,b=n%10;return n+" "+((a>=11&&a<=14)?"сотрудников":b===1?"сотрудник":(b>=2&&b<=4)?"сотрудника":"сотрудников")}
 const OP_PACK_SIZE = 10;
 const OP_SCOPE = [
@@ -998,25 +1000,23 @@ function accountingPriceRows(c) {
 function packCard(el, planKey, c, acc) {
   const accounting = acc ? accountingMonthly(c) : 0;
   const pack = calcPackage(planKey, accounting);
-  const rate = taxRate();
   const managementRows = pack.items.map(([label, amount]) => [c1wrap(label), rub(amount)]);
   managementRows.push(freeRow("Вопросы и коммуникация в чате", S.i_chat));
   if (pack.plan.team) managementRows.push([MG_TEAM[0], "включено"]);
   if (!acc) managementRows.push(["Коммуникация с текущей бухгалтерией", "бесплатно"]);
   managementRows.push(...taxRows(pack.management, "Итого в месяц"));
   const managementSection = `<details class="package-breakdown">
-    <summary>Управленческий учёт «${pack.plan.name}» — <strong>${rub(rate ? grossUp(pack.management, rate) : pack.management)}/мес.</strong></summary>
+    <summary>Управленческий учёт «${pack.plan.name}» — <strong>${rub(pack.management)}/мес.</strong></summary>
     <table>${rows(managementRows)}</table>
     <a href="?tab=mgmt&amp;plan=${planKey}" data-package-tab="mgmt" data-plan="${planKey}">Открыть управленческий учёт</a>
   </details>`;
   const accountingSection = acc ? `<details class="package-breakdown accounting">
-    <summary>Бухгалтерия — <strong>${rub(rate ? grossUp(accounting, rate) : accounting)}/мес.</strong></summary>
+    <summary>Бухгалтерия — <strong>${rub(accounting)}/мес.</strong></summary>
     <table>${rows(accountingPriceRows(c))}</table>
     <a href="?tab=buh" data-package-tab="buh">Открыть расчёт бухгалтерии</a>
   </details>` : "";
-  const t = [[rate ? "Общая стоимость до скидки и налога" : "Общая стоимость до скидки", rub(pack.subtotal), "tot"]];
+  const t = [["Общая стоимость до скидки", rub(pack.subtotal), "tot"]];
   t.push([`Скидка за пакет ${pack.discountRate}%`, pack.discount ? "−" + rub(pack.discount) : rub(0), "sec sd"]);
-  if (taxRate()) t.push(["Стоимость со скидкой до налоговой надбавки", rub(pack.total), "tot"]);
   t.push(...taxRows(pack.total, "Итого со скидкой в месяц"));
   const warning = acc && c.operations.warning ? c.operations.warning + " " : "";
   el.innerHTML = `<h2>Пакет «${pack.plan.name}»</h2><div class="big">${bigPrice(pack.total," / мес")}</div>${managementSection}${accountingSection}<table style="margin-top:12px">${rows(t)}</table><div class="note">${warning}Для постов: ≈ ${rub(pack.total / 30)} в день.</div>`;
@@ -1081,7 +1081,7 @@ function renderNeyla() {
   const t = [[label, rub(subscription)]];
   t.push(giftRow("Настройка шаблона и приложения", 0), giftRow("Первичный созвон, консультация", 0));
   if (call) t.push([`Созвон раз в месяц ${call.name}: ${rub(call.rate)} × ${months} мес.`, rub(call.total)]);
-  t.push(["Итого за период (фиксированный тариф, налог не начисляется)", rub(total), "tot"]);
+  t.push(["Итого за период", rub(total), "tot"]);
   if (!trial) t.push(["В день (для постов)", rub(subscription / (months * 30))]);
   $("n_tbl").innerHTML = rows(t);
 
@@ -1145,7 +1145,7 @@ function renderAudit() {
   const a = calcAudit();
   $("a_accounting_options").classList.toggle("hide", !a.accounting);
   $("a_management_options").classList.toggle("hide", !a.management);
-  $("a_accounting_rate").textContent = `Цена из вкладки «Бухгалтерия»: ${rub(a.monthly)} в месяц без налоговой надбавки.`;
+  $("a_accounting_rate").textContent = `Цена из вкладки «Бухгалтерия»: ${rub(a.monthly)} в месяц.`;
   $("a_management_rate").textContent = `ДДС и ОПиУ: ${rub(S.i_dds)} за месяц.`;
   $("a_rushl").textContent = `Срочно (+${a.urgencyRate}% к восстановлению бухучёта)`;
   const term = `Срок — ${AUDIT_TERMS.standard}.`;
@@ -1416,6 +1416,26 @@ $("sp_print").onclick=()=>{try{window.print()}catch(e){$("sp_msg").textContent="
 $("sp_copy").onclick=()=>{if(SPEC)copyText(specText(SPEC),"sp_msg")};
 
 // вкладки
+for (const section of document.querySelectorAll('main > [id^="t-"]:not(#t-spec)')) {
+  const action = document.createElement("div");
+  action.className = "spec-shortcut noprint";
+  action.innerHTML = '<button type="button">Создать спецификацию →</button>';
+  action.querySelector("button").addEventListener("click", () => {
+    const source = section.id.slice(2);
+    $("sp_pk").value = source === "pack" ? ($("m_plan_choice").value === "control" ? "2" : "1") : "none";
+    $("sp_sep").classList.toggle("hide", source === "pack");
+    if (source !== "pack") {
+      $("sp_b").checked = source === "buh";
+      $("sp_m").checked = source === "mgmt";
+      $("sp_n").checked = source === "neyla";
+    }
+    $("sp_a").checked = source === "audit";
+    showServiceTab("spec");
+    $("sp_done").click();
+    $("t-spec").scrollIntoView({block: "start"});
+  });
+  section.appendChild(action);
+}
 const serviceTabs = [...document.querySelectorAll(".tab[data-t]")];
 function showServiceTab(selected) {
   for (const tab of serviceTabs) {
