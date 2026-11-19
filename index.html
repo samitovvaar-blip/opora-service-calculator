@@ -349,13 +349,17 @@ td > details { margin: 0; }
       </div>
       <div class="row">
         <div><label for="b_emp">Сотрудников всего</label><input type="number" id="b_emp" value="0" min="0" step="1" aria-describedby="b_empnote"></div>
-        <div><label>Расчёт заработной платы</label><select id="b_pay"><option value="1">Нужен</option><option value="0">Не нужен</option></select></div>
+        <div><label for="b_pay">Расчёт зарплаты и отчётность</label><select id="b_pay"><option value="1">Нужен</option><option value="0">Не нужен</option></select></div>
       </div>
       <div class="note hide" id="b_empnote"></div>
       <div id="b_payroll_group" class="hide">
         <label for="b_payroll_llcs">Сколько ООО в группе используют включённый расчёт зарплаты</label>
         <input type="number" id="b_payroll_llcs" min="0" step="1" aria-describedby="b_payroll_hint">
         <div class="note" id="b_payroll_hint">Если оставить поле пустым, калькулятор использует весь включённый лимит в пределах общей численности.</div>
+      </div>
+      <div id="b_hrbox">
+        <div class="chk"><input type="checkbox" id="b_hr" aria-describedby="b_hrnote"><label for="b_hr" style="margin:0;color:inherit">Добавить кадровый учёт</label></div>
+        <div class="note" id="b_hrnote"></div>
       </div>
       <div class="chk"><input type="checkbox" id="b_vat"><label style="margin:0;color:inherit">НДС</label></div>
       <div id="b_vatbox" class="hide"><label>Ставка НДС</label><select id="b_vatr"><option value="usn">5% или 7% (НДС на УСН)</option><option value="r10">10%</option><option value="r20" selected>20%</option><option value="mix">10% и 20%</option></select></div>
@@ -678,7 +682,7 @@ td > details { margin: 0; }
 <script>
 const DEF = {
   base_npd:5000, base_patent:5000, base_ausn8:6000, base_ausn15:8000, base_usn6:7000, base_usn15:9000, base_osno:15000,
-  add_ooo:3000, ops_free:30, doc_pack_rate:1500, ops_max:150, emp_rate:800, grp_next:80, tax_ip:6, tax_fl:4,
+  add_ooo:3000, ops_free:30, doc_pack_rate:1500, ops_max:150, emp_rate:800, hr_rate:500, grp_next:80, tax_ip:6, tax_fl:4,
   add_vat:4000, add_vat_usn:3000, add_vat_mix:5000, add_ved:8000, add_wh:3000, add_wh_serv:3000, add_wh_mix:6000, add_kkt:2000, add_mp:3000, one_c:5000, c1_b1:30, c1_b2:100, c1_b3:150, c1_t1:2000, c1_t2:3000, c1_t3:4000, c1_t4:5000,
   lvl_light:15000, lvl_std:25000, spread:10,
   i_dds:15000, i_ost:5000, i_call:7000, i_chat:0, i_app:3000, i_hour_online:2500, i_plan:10000, i_call2:7000, i_goods:6000, i_hour:3500, i_hour_staff:2000,
@@ -688,7 +692,7 @@ const DEF = {
 };
 const LBL = {
   base_npd:"База: НПД, ₽",base_patent:"База: патент, ₽",base_ausn8:"База: АУСН доходы 8%, ₽",base_ausn15:"База: АУСН доходы−расходы 15%, ₽",base_usn6:"База: УСН доходы, ₽",base_usn15:"База: УСН доходы−расходы, ₽",base_osno:"База: ОСНО, ₽",
-  add_ooo:"Бухгалтерский учёт ООО, доплата к базе, ₽",ops_free:"Бухгалтерия: документов в месяц включено в базу",doc_pack_rate:"Пакет из 10 первичных документов, ₽",ops_max:"Предел документов в месяц (дальше индивидуально)",emp_rate:"Расчёт зарплаты: за сотрудника в месяц, ₽",grp_next:"Группа: каждая следующая компания, % от базы",tax_ip:"Налог, если платит ИП или ООО, %",tax_fl:"Налог, если платит физлицо, %",
+  add_ooo:"Бухгалтерский учёт ООО, доплата к базе, ₽",ops_free:"Бухгалтерия: документов в месяц включено в базу",doc_pack_rate:"Пакет из 10 первичных документов, ₽",ops_max:"Предел документов в месяц (дальше индивидуально)",emp_rate:"Расчёт зарплаты и отчётность: за сотрудника в месяц, ₽",hr_rate:"Кадровый учёт: доплата за сотрудника в месяц, ₽",grp_next:"Группа: каждая следующая компания, % от базы",tax_ip:"Налог, если платит ИП или ООО, %",tax_fl:"Налог, если платит физлицо, %",
   add_vat:"НДС 10% или 20%, ₽",add_vat_usn:"НДС 5%/7% (на УСН), ₽",add_vat_mix:"НДС 10% и 20% вместе, ₽",add_ved:"ВЭД, ₽",add_wh:"Себестоимость: товарный бизнес, ₽",add_wh_serv:"Себестоимость: бизнес услуг, ₽",add_wh_mix:"Себестоимость: товары и услуги, ₽",add_kkt:"Касса/ККТ, за каждую кассу, ₽",add_mp:"За маркетплейс, ₽",one_c:"1С: заведение базы, разово (за одну базу), ₽",c1_b1:"1С: граница уровня 1 (документов в месяц на базу)",c1_b2:"1С: граница уровня 2",c1_b3:"1С: граница уровня 3",c1_t1:"1С: ведение, уровень 1 (до границы 1), ₽/мес за базу",c1_t2:"1С: ведение, уровень 2, ₽/мес за базу",c1_t3:"1С: ведение, уровень 3, ₽/мес за базу",c1_t4:"1С: ведение, свыше границы 3, ₽/мес за базу",
   lvl_light:"Граница «Лайт» до, ₽",lvl_std:"Граница «Стандарт» до, ₽",spread:"Вилка цены ±, %",
   i_dds:"Состав: ДДС и ОПиУ каждый месяц, ₽",i_hour_staff:"Созвон или встреча с сотрудником, 1 час, ₽",i_hour_online:"Дополнительная встреча со мной онлайн, 1 час, ₽",i_ost:"Состав: контроль остатков дебиторки/кредиторки (платёжный календарь), ₽",i_call:"Созвон или встреча с отчётом владельцу и рекомендациями, 2 часа, ₽",i_chat:"Состав: вопросы и коммуникация в чате, ₽ (0 = бесплатно)",i_app:"Состав: доступ к приложению и боту НЕЙЛА, ₽",i_plan:"Контроль: бюджет и план-факт, ₽",i_call2:"Контроль: второй созвон в месяц (2 часа), ₽",i_hour:"Дополнительный час созвона или встречи, ₽",i_goods:"Доп к управленке: товарный учёт, ₽",
@@ -718,6 +722,14 @@ const rows=a=>a.map(r=>`<tr class="${r[2]||""}"><td>${r[0]}</td><td>${r[1]}</td>
 const C1_NAME="Стандартное ведение базы 1С";
 const C1_LIST=["Загрузка банковских выписок (счёт 51)","Касса (счёт 50)","Расчёты с поставщиками клиента (счета 60–62)","Если есть НДС: счёт 19 и счёт 68 (налоги)"];
 const C1_NOTE="Всё остальное, что выходит за рамки стандартного ведения, оплачивается отдельно.";
+const PAYROLL_SCOPE = [
+  "Рассчитываем зарплату, налоги и взносы, готовим и сдаём отчётность по сотрудникам.",
+  "Рассчитываем выплаты при увольнении и подаём сведения о приёме и увольнении по кадровым документам клиента."
+];
+const HR_SCOPE = [
+  "Готовим кадровые документы по приёму, переводу, отпуску и увольнению, включая трудовые договоры и допсоглашения.",
+  "Ведём текущий кадровый документооборот и храним кадровые документы в согласованном с клиентом месте."
+];
 const PC_NAME="Платёжный календарь";
 const PC_LIST=["Контроль остатков","дебиторки","кредиторки","кассовых разрывов"];
 const WRAPS=[[C1_NAME,C1_LIST,C1_NOTE,"details","; "],[PC_NAME,PC_LIST,"","inline",", "]];
@@ -798,16 +810,20 @@ function calcBuh(){
     nums.push([documents.label, 0, "включено"]);
   }
   if(payrollIncluded){
-    const label = `Расчёт зарплаты в тарифе ООО: до ${payrollIncluded} чел.`;
+    const label = `Расчёт зарплаты и отчётность в тарифе ООО: до ${payrollIncluded} чел.`;
     items.push([label,"включено"]);
     nums.push([label,0,"включено"]);
   }
   const allocated = $("b_payroll_llcs").value;
   const usedPayroll = form==="group" && allocated!=="" ? Math.min(payrollIncluded, Math.floor(num("b_payroll_llcs"))) : payrollIncluded;
-  const paidEmployees = $("b_pay").value==="1" ? Math.max(0, emp-usedPayroll) : 0;
+  const payrollOn = $("b_pay").value==="1";
+  const paidEmployees = payrollOn ? Math.max(0, emp-usedPayroll) : 0;
   const payV = paidEmployees * S.emp_rate;
-  const payrollExtraLabel = `Расчёт заработной платы${payrollIncluded ? " сверх включённого лимита" : ""}: ${plEmp(paidEmployees)} (1 чел. — ${rub(S.emp_rate)})`;
+  const payrollExtraLabel = `Расчёт зарплаты и отчётность${payrollIncluded ? " сверх включённого лимита" : ""}: ${plEmp(paidEmployees)} (1 чел. — ${rub(S.emp_rate)})`;
   add(payrollExtraLabel, payV);
+  const hrOn = payrollOn && $("b_hr").checked;
+  const hrRateAmount = Math.max(0, S.hr_rate);
+  if (hrOn) add(`Кадровый учёт: ${plEmp(emp)} (1 чел. — ${rub(hrRateAmount)})`, emp * hrRateAmount);
   if($("b_vat").checked){const v=$("b_vatr").value;add("НДС ("+$("b_vatr").selectedOptions[0].text+")",v==="usn"?S.add_vat_usn:v==="mix"?S.add_vat_mix:S.add_vat)}
   if($("b_ved").checked)add("ВЭД",S.add_ved);
   {const w=$("b_wht").value;add(w==="goods"?"Себестоимость: товарный бизнес (товарный учёт)":w==="mix"?"Себестоимость: товары и услуги":"Себестоимость: бизнес услуг",w==="goods"?S.add_wh:w==="mix"?S.add_wh_mix:S.add_wh_serv)}
@@ -822,7 +838,7 @@ function calcBuh(){
     add(`Стандартное ведение базы 1С${ents>1?" ("+ents+" шт.)":""}: ${t[1]} документов в месяц на базу`,ents*t[0]);
   }
   const m=Math.round(sum);
-  return {m,items,nums,pay:payV,emp,payrollIncluded,payrollExtraLabel,documentWarning:documents.warning,onec:$("b_1c").value==="no"?ents*S.one_c:0,ents,callH:Math.max(1,Math.round(num("b_callh")||1)),callV:Math.max(1,Math.round(num("b_callh")||1))*hrRate($("b_who").value==="staff",$("b_fmt").value==="on"),staff:$("b_who").value==="staff",online:$("b_fmt").value==="on"};
+  return {m,items,nums,pay:payV,emp,hrOn,payrollIncluded,payrollExtraLabel,documentWarning:documents.warning,onec:$("b_1c").value==="no"?ents*S.one_c:0,ents,callH:Math.max(1,Math.round(num("b_callh")||1)),callV:Math.max(1,Math.round(num("b_callh")||1))*hrRate($("b_who").value==="staff",$("b_fmt").value==="on"),staff:$("b_who").value==="staff",online:$("b_fmt").value==="on"};
 }
 function accountingMonthly(c){return c.m + c.callV}
 function lvl(m){return m<=S.lvl_light?["Лайт","ok"]:m<=S.lvl_std?["Стандарт",""]:["Сложный учёт","warn"]}
@@ -837,9 +853,12 @@ function renderBuh(){
   $("b_opsnote").textContent=`Считайте акты, накладные и УПД. До ${S.ops_free} документов в месяц входят в базу. Сверх лимита каждый начатый пакет из ${DOC_PACK_SIZE} документов стоит ${rub(Math.max(0, S.doc_pack_rate))}.`;
   const c=calcBuh(), sp=S.spread/100, L=lvl(c.m), mt=accountingMonthly(c);
   $("b_empnote").classList.toggle("hide", !c.payrollIncluded);
-  $("b_empnote").textContent = c.payrollIncluded ? `На каждое ООО включён расчёт зарплаты за 1 сотрудника. Сверх включённого лимита — ${rub(S.emp_rate)} за сотрудника в месяц.` : "";
+  $("b_empnote").textContent = c.payrollIncluded ? `На каждое ООО включены расчёт зарплаты и отчётность за 1 сотрудника. Сверх включённого лимита — ${rub(S.emp_rate)} за сотрудника в месяц.` : "";
   $("b_payroll_group").classList.toggle("hide", fm!=="group" || !c.payrollIncluded || $("b_pay").value!=="1");
   $("b_payroll_llcs").max = c.payrollIncluded;
+  $("b_hrbox").classList.toggle("hide", $("b_pay").value!=="1");
+  const hrRateAmount = Math.max(0, S.hr_rate);
+  $("b_hrnote").textContent = `Кадровые документы и их ведение — ${rub(hrRateAmount)} за сотрудника в месяц. Зарплата, отчётность и кадры вместе — ${rub(S.emp_rate + hrRateAmount)} за сотрудника.` + (c.payrollIncluded ? " За первого сотрудника каждого ООО доплачивается только кадровый учёт." : "");
   $("b_callnote").textContent=`Созвон входит всегда: 1 час в месяц — со мной ${rub(S.i_hour)}, с сотрудником ${rub(S.i_hour_staff)}. Нужно больше — укажите общее число часов, цена вырастет.`;
   $("b_price").innerHTML=bigPrice(mt," / мес");
   $("b_range").textContent=`Вилка: ${rub(r500(mt*(1-sp)))} – ${rub(r500(mt*(1+sp)))}`;
@@ -851,7 +870,8 @@ function renderBuh(){
   if(c.onec>0)t.push([`Разово: заведение базы 1С (${c.ents} шт.)`,rub(c.onec),"tot"]);
   $("b_tbl").innerHTML=rows(t);
   {const R=[["Учёт за месяц","операции отражены, первичные документы обработаны, налоги рассчитаны, отчётность сдана в срок"]];
-   if($("b_pay").value==="1"&&c.emp>0)R.push(["Зарплата и кадры","расчёт зарплаты, ведомости и отчётность по сотрудникам ("+plEmp(c.emp)+")"]);
+   if($("b_pay").value==="1"&&c.emp>0)R.push(["Расчёт зарплаты и отчётность",PAYROLL_SCOPE.join(" ")]);
+   if(c.hrOn&&c.emp>0)R.push(["Кадровый учёт",HR_SCOPE.join(" ")]);
    if($("b_vat").checked)R.push(["НДС","расчёт налога, книги покупок и продаж, декларация по НДС"]);
    if($("b_ved").checked)R.push(["ВЭД","учёт внешнеэкономических операций и валютных расчётов"]);
    {const w=$("b_wht").value;R.push(["Себестоимость",w==="goods"?"товарный учёт: остатки, списание и себестоимость товаров":w==="mix"?"себестоимость товаров и услуг, товарный учёт":"себестоимость услуг"])}
@@ -935,7 +955,7 @@ function packCard(el, name, keys, c, acc) {
   t.push(["Итого управленческий учёт", rub(pack.management), "tot"]);
 
   if (acc) {
-    const detail = c.items.filter(row => !row[0].startsWith("Расчёт заработной платы") && row[1] !== "")
+    const detail = c.items.filter(row => row[0] !== c.payrollExtraLabel && row[1] !== "")
       .map(([label, value]) => `<div style="display:flex;justify-content:space-between;gap:10px;font-size:13px;color:var(--mut);padding:2px 0 2px 14px"><span>${c1wrap(label)}</span><span>${value}</span></div>`).join("");
     t.push(["Бухгалтерия — стоимость по расчёту клиента", "", "sec sb"]);
     t.push([`<details><summary>Бухгалтерия, налоги, отчётность ▾</summary>${detail}</details>`, rub(Math.max(0, c.m - c.pay))]);
@@ -1111,7 +1131,7 @@ const BASE_SCOPE = {
 const LLC_SCOPE = [
   "Ведём бухгалтерский учёт организации: отражаем операции на счетах, проверяем остатки и закрываем периоды.",
   "Готовим и сдаём годовую бухгалтерскую отчётность, в том числе баланс и отчёт о финансовых результатах.",
-  "Расчёт зарплаты за одного сотрудника включён в стоимость обслуживания ООО."
+  "Расчёт зарплаты и отчётность за одного сотрудника включены в стоимость обслуживания ООО."
 ];
 function listData(){
   const g=v=>v===0?"🎁 в подарок":rub(v);
@@ -1120,7 +1140,8 @@ function listData(){
   B.push(["Бухгалтерский учёт ООО — дополнительно к базе по налоговому режиму","+"+rub(S.add_ooo),"в месяц",LLC_SCOPE],
    [`Первичные документы: до ${S.ops_free} в месяц входят в базу`,"—",""],
    [`Дополнительный пакет из ${DOC_PACK_SIZE} документов (до ${S.ops_max} документов в месяц)`,rub(Math.max(0, S.doc_pack_rate)),"в месяц"],
-   ["Расчёт заработной платы, за 1 сотрудника (для ООО — сверх одного включённого)",rub(S.emp_rate),"в месяц"],
+   ["Расчёт зарплаты и отчётность, за 1 сотрудника (для ООО — сверх одного включённого)",rub(S.emp_rate),"в месяц",PAYROLL_SCOPE],
+   ["Кадровый учёт, доплата за 1 сотрудника",rub(Math.max(0, S.hr_rate)),"в месяц",HR_SCOPE],
    ["НДС 5% или 7% (на УСН)",rub(S.add_vat_usn),"в месяц"],["НДС 10% или 20%",rub(S.add_vat),"в месяц"],["НДС 10% и 20% вместе",rub(S.add_vat_mix),"в месяц"],
    ["ВЭД",rub(S.add_ved),"в месяц"],["Себестоимость: товарный бизнес (товарный учёт)",rub(S.add_wh),"в месяц"],["Себестоимость: бизнес услуг",rub(S.add_wh_serv),"в месяц"],["Себестоимость: товары и услуги",rub(S.add_wh_mix),"в месяц"],
    ["Касса / ККТ, за каждую кассу",rub(S.add_kkt),"в месяц"],["Маркетплейс (WB, Ozon, Яндекс Маркет), за каждый",rub(S.add_mp),"в месяц"],
@@ -1567,7 +1588,7 @@ buildSettings();renderAll();
 (() => {
   const storageKey = "opora_work_log";
   const groups = [
-    ["Бухгалтерия", ["add_kkt", "add_wh_serv", "add_wh", "add_wh_mix", "base_npd", "base_patent", "base_ausn8", "base_ausn15", "base_usn6", "base_usn15", "base_osno", "add_ooo", "doc_pack_rate", "emp_rate", "add_vat", "add_vat_usn", "add_vat_mix", "add_ved", "add_mp", "one_c", "c1_t1", "c1_t2", "c1_t3", "c1_t4"]],
+    ["Бухгалтерия", ["add_kkt", "add_wh_serv", "add_wh", "add_wh_mix", "base_npd", "base_patent", "base_ausn8", "base_ausn15", "base_usn6", "base_usn15", "base_osno", "add_ooo", "doc_pack_rate", "emp_rate", "hr_rate", "add_vat", "add_vat_usn", "add_vat_mix", "add_ved", "add_mp", "one_c", "c1_t1", "c1_t2", "c1_t3", "c1_t4"]],
     ["Управленческий учёт", ["i_dds", "i_ost", "i_call", "i_chat", "i_app", "i_plan", "i_call2", "i_goods", "i_hour", "i_hour_online", "i_hour_staff", "i_tbl", "i_office"]],
     ["Аудит", ["au_k1", "au_system"]],
     ["НЕЙЛА", ["n1", "n3", "n6", "n12", "ny_me", "ny_staff"]]
