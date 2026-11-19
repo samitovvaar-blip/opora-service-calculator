@@ -343,10 +343,17 @@ td > details { margin: 0; }
         <div id="g_rows"></div>
         <button type="button" id="g_add">+ Добавить компанию</button>
       </div>
-      <div class="row">
-        <div><label for="b_ops">Первичных документов в месяц</label><input type="number" id="b_ops" value="30" min="0" step="1" aria-describedby="b_opsnote"></div>
-        <div class="note" id="b_opsnote" style="margin-top:20px"></div>
+      <h2 style="margin-top:16px">Операции за месяц</h2>
+      <div class="row" aria-describedby="b_opsnote">
+        <div><label for="b_bankops">Банковские операции</label><input type="number" id="b_bankops" placeholder="0" min="0" step="1" aria-describedby="b_bankops_help"><div class="note" id="b_bankops_help">Поступления и списания по выписке</div></div>
+        <div><label for="b_ops">Первичные документы</label><input type="number" id="b_ops" value="30" min="0" step="1" aria-describedby="b_docs_help"><div class="note" id="b_docs_help">Акты, накладные, УПД и другие документы</div></div>
+        <div><label for="b_otherops">Прочие ручные операции</label><input type="number" id="b_otherops" placeholder="0" min="0" step="1" aria-describedby="b_otherops_help"><div class="note" id="b_otherops_help">Отдельные корректировки, зачёты и списания</div></div>
       </div>
+      <div class="note" id="b_opsnote" aria-live="polite"></div>
+      <details>
+        <summary>Как считаются операции</summary>
+        <ul class="note" id="b_opsrules"></ul>
+      </details>
       <div class="row">
         <div><label for="b_emp">Сотрудников всего</label><input type="number" id="b_emp" value="0" min="0" step="1" aria-describedby="b_empnote"></div>
         <div><label for="b_pay">Расчёт зарплаты и отчётность</label><select id="b_pay"><option value="1">Нужен</option><option value="0">Не нужен</option></select></div>
@@ -682,8 +689,8 @@ td > details { margin: 0; }
 <script>
 const DEF = {
   base_npd:5000, base_patent:5000, base_ausn8:6000, base_ausn15:8000, base_usn6:7000, base_usn15:9000, base_osno:15000,
-  add_ooo:3000, ops_free:30, doc_pack_rate:1500, ops_max:150, emp_rate:800, hr_rate:500, grp_next:80, tax_ip:6, tax_fl:4,
-  add_vat:4000, add_vat_usn:3000, add_vat_mix:5000, add_ved:8000, add_wh:3000, add_wh_serv:3000, add_wh_mix:6000, add_kkt:2000, add_mp:3000, one_c:5000, c1_b1:30, c1_b2:100, c1_b3:150, c1_t1:2000, c1_t2:3000, c1_t3:4000, c1_t4:5000,
+  add_ooo:3000, ops_free:50, doc_pack_rate:1500, ops_max:150, emp_rate:800, hr_rate:500, grp_next:80, tax_ip:6, tax_fl:4,
+  add_vat:4000, add_vat_usn:3000, add_vat_mix:5000, add_ved:8000, add_wh:3000, add_wh_serv:3000, add_wh_mix:6000, add_kkt:2000, add_mp:3000, one_c:5000, c1_b1:50, c1_b2:100, c1_b3:150, c1_t1:2000, c1_t2:3000, c1_t3:4000, c1_t4:5000,
   lvl_light:15000, lvl_std:25000, spread:10,
   i_dds:15000, i_ost:5000, i_call:7000, i_chat:0, i_app:3000, i_hour_online:2500, i_plan:10000, i_call2:7000, i_goods:6000, i_hour:3500, i_hour_staff:2000,
   pk_disc:10,
@@ -692,7 +699,7 @@ const DEF = {
 };
 const LBL = {
   base_npd:"База: НПД, ₽",base_patent:"База: патент, ₽",base_ausn8:"База: АУСН доходы 8%, ₽",base_ausn15:"База: АУСН доходы−расходы 15%, ₽",base_usn6:"База: УСН доходы, ₽",base_usn15:"База: УСН доходы−расходы, ₽",base_osno:"База: ОСНО, ₽",
-  add_ooo:"Бухгалтерский учёт ООО, доплата к базе, ₽",ops_free:"Бухгалтерия: документов в месяц включено в базу",doc_pack_rate:"Пакет из 10 первичных документов, ₽",ops_max:"Предел документов в месяц (дальше индивидуально)",emp_rate:"Расчёт зарплаты и отчётность: за сотрудника в месяц, ₽",hr_rate:"Кадровый учёт: доплата за сотрудника в месяц, ₽",grp_next:"Группа: каждая следующая компания, % от базы",tax_ip:"Налог, если платит ИП или ООО, %",tax_fl:"Налог, если платит физлицо, %",
+  add_ooo:"Бухгалтерский учёт ООО, доплата к базе, ₽",ops_free:"Бухгалтерия: операций в месяц включено в базу",doc_pack_rate:"Пакет из 10 операций, ₽",ops_max:"Предел операций в месяц (дальше индивидуально)",emp_rate:"Расчёт зарплаты и отчётность: за сотрудника в месяц, ₽",hr_rate:"Кадровый учёт: доплата за сотрудника в месяц, ₽",grp_next:"Группа: каждая следующая компания, % от базы",tax_ip:"Налог, если платит ИП или ООО, %",tax_fl:"Налог, если платит физлицо, %",
   add_vat:"НДС 10% или 20%, ₽",add_vat_usn:"НДС 5%/7% (на УСН), ₽",add_vat_mix:"НДС 10% и 20% вместе, ₽",add_ved:"ВЭД, ₽",add_wh:"Себестоимость: товарный бизнес, ₽",add_wh_serv:"Себестоимость: бизнес услуг, ₽",add_wh_mix:"Себестоимость: товары и услуги, ₽",add_kkt:"Касса/ККТ, за каждую кассу, ₽",add_mp:"За маркетплейс, ₽",one_c:"1С: заведение базы, разово (за одну базу), ₽",c1_b1:"1С: граница уровня 1 (документов в месяц на базу)",c1_b2:"1С: граница уровня 2",c1_b3:"1С: граница уровня 3",c1_t1:"1С: ведение, уровень 1 (до границы 1), ₽/мес за базу",c1_t2:"1С: ведение, уровень 2, ₽/мес за базу",c1_t3:"1С: ведение, уровень 3, ₽/мес за базу",c1_t4:"1С: ведение, свыше границы 3, ₽/мес за базу",
   lvl_light:"Граница «Лайт» до, ₽",lvl_std:"Граница «Стандарт» до, ₽",spread:"Вилка цены ±, %",
   i_dds:"Состав: ДДС и ОПиУ каждый месяц, ₽",i_hour_staff:"Созвон или встреча с сотрудником, 1 час, ₽",i_hour_online:"Дополнительная встреча со мной онлайн, 1 час, ₽",i_ost:"Состав: контроль остатков дебиторки/кредиторки (платёжный календарь), ₽",i_call:"Созвон или встреча с отчётом владельцу и рекомендациями, 2 часа, ₽",i_chat:"Состав: вопросы и коммуникация в чате, ₽ (0 = бесплатно)",i_app:"Состав: доступ к приложению и боту НЕЙЛА, ₽",i_plan:"Контроль: бюджет и план-факт, ₽",i_call2:"Контроль: второй созвон в месяц (2 часа), ₽",i_hour:"Дополнительный час созвона или встречи, ₽",i_goods:"Доп к управленке: товарный учёт, ₽",
@@ -710,6 +717,10 @@ try {
     if (!rates.managementReportsRateUpdated && rates.i_dds === 10000) rates.i_dds = DEF.i_dds;
     if (!rates.currentAuditRateUpdated && rates.au_k1 === 10000) rates.au_k1 = DEF.au_k1;
     if (!rates.packageDiscountUpdated && rates.pk_disc === 0) rates.pk_disc = DEF.pk_disc;
+    if (!rates.operationVolumeUpdated) {
+      if (rates.ops_free === 30) rates.ops_free = DEF.ops_free;
+      if (rates.c1_b1 === 30) rates.c1_b1 = DEF.c1_b1;
+    }
     S = {...DEF, ...rates};
   }
 } catch (e) {}
@@ -761,17 +772,22 @@ function bigPrice(v,suf){const r=taxRate();suf=suf||"";if(!r)return rub(v)+suf;r
 function gx(v){const r=taxRate();return r?grossUp(v,r):v}
 function taxRows(total,lab,skipNone){const r=taxRate();if(!r)return skipNone?[]:[[lab,rub(total),"tot"]];const g=grossUp(total,r);return [[`Налог ${r}% (${taxLabel()}), включён в сумму`,rub(g-total)],[lab.startsWith("Итого")?lab.replace("Итого","Итого к оплате"):"К оплате: "+lab.charAt(0).toLowerCase()+lab.slice(1),rub(g),"tot"]]}
 function plEmp(n){const a=n%100,b=n%10;return n+" "+((a>=11&&a<=14)?"сотрудников":b===1?"сотрудник":(b>=2&&b<=4)?"сотрудника":"сотрудников")}
-const DOC_PACK_SIZE = 10;
-function documentPackage(count) {
+const OP_PACK_SIZE = 10;
+const OP_SCOPE = [
+  "Банк: одно поступление или списание по выписке — одна операция. Перевод между своими счетами считаем один раз.",
+  "Первичка: один обработанный акт, УПД или накладная — одна операция. Оплата и документ по одной сделке считаются отдельно, если обрабатываем оба.",
+  "Прочее: одна самостоятельная ручная операция в учёте, например зачёт, списание или корректировка, которую ещё не посчитали в банке или первичке.",
+  "Дубли, проводки внутри одного документа и автоматическое закрытие месяца объём операций не увеличивают."
+];
+function operationPackage(bank, docs, other) {
+  const count = bank + docs + other;
   const extra = Math.max(0, Math.min(count, S.ops_max) - S.ops_free);
-  const packs = Math.ceil(extra / DOC_PACK_SIZE);
-  const limit = Math.min(S.ops_free + packs * DOC_PACK_SIZE, S.ops_max);
+  const packs = Math.ceil(extra / OP_PACK_SIZE);
+  const limit = Math.min(S.ops_free + packs * OP_PACK_SIZE, S.ops_max);
   const rate = Math.max(0, S.doc_pack_rate);
-  const label = packs
-    ? `Первичные документы: до ${limit} в месяц (${packs} × ${DOC_PACK_SIZE} сверх базового лимита)`
-    : `Первичные документы: до ${limit} в месяц`;
-  const warning = count > S.ops_max ? `Свыше ${S.ops_max} документов в месяц стоимость рассчитывается индивидуально.` : "";
-  return { label, price: packs * rate, warning };
+  const label = `Операции за месяц — ${count} (банк — ${bank}, первичка — ${docs}, прочие — ${other}). Лимит пакета — ${limit}`;
+  const warning = count > S.ops_max ? `Свыше ${S.ops_max} операций в месяц стоимость рассчитывается индивидуально.` : "";
+  return { count, label, price: packs * rate, warning };
 }
 function calcBuh(){
   const docs=Math.ceil(num("b_ops")), emp=Math.floor(num("b_emp"));
@@ -802,12 +818,12 @@ function calcBuh(){
     add("База ("+$("b_reg").selectedOptions[0].text+")",S["base_"+$("b_reg").value]);
     if(form==="ooo")add("Бухгалтерский учёт ООО",S.add_ooo);
   }
-  const documents = documentPackage(docs);
-  if (documents.price > 0) {
-    add(documents.label, documents.price);
+  const operations = operationPackage(Math.ceil(num("b_bankops")), docs, Math.ceil(num("b_otherops")));
+  if (operations.price > 0) {
+    add(operations.label, operations.price);
   } else {
-    items.push([documents.label, "включено"]);
-    nums.push([documents.label, 0, "включено"]);
+    items.push([operations.label, "включено"]);
+    nums.push([operations.label, 0, "включено"]);
   }
   if(payrollIncluded){
     const label = `Расчёт зарплаты и отчётность в тарифе ООО: до ${payrollIncluded} чел.`;
@@ -838,7 +854,7 @@ function calcBuh(){
     add(`Стандартное ведение базы 1С${ents>1?" ("+ents+" шт.)":""}: ${t[1]} документов в месяц на базу`,ents*t[0]);
   }
   const m=Math.round(sum);
-  return {m,items,nums,pay:payV,emp,hrOn,payrollIncluded,payrollExtraLabel,documentWarning:documents.warning,onec:$("b_1c").value==="no"?ents*S.one_c:0,ents,callH:Math.max(1,Math.round(num("b_callh")||1)),callV:Math.max(1,Math.round(num("b_callh")||1))*hrRate($("b_who").value==="staff",$("b_fmt").value==="on"),staff:$("b_who").value==="staff",online:$("b_fmt").value==="on"};
+  return {m,items,nums,pay:payV,emp,hrOn,payrollIncluded,payrollExtraLabel,operations,onec:$("b_1c").value==="no"?ents*S.one_c:0,ents,callH:Math.max(1,Math.round(num("b_callh")||1)),callV:Math.max(1,Math.round(num("b_callh")||1))*hrRate($("b_who").value==="staff",$("b_fmt").value==="on"),staff:$("b_who").value==="staff",online:$("b_fmt").value==="on"};
 }
 function accountingMonthly(c){return c.m + c.callV}
 function lvl(m){return m<=S.lvl_light?["Лайт","ok"]:m<=S.lvl_std?["Стандарт",""]:["Сложный учёт","warn"]}
@@ -850,8 +866,9 @@ function renderBuh(){
   $("b_vatbox").classList.toggle("hide",!$("b_vat").checked);
   $("b_kktbox").classList.toggle("hide",!$("b_kkt").checked);
   $("b_mpbox").classList.toggle("hide",!$("b_mpon").checked);
-  $("b_opsnote").textContent=`Считайте акты, накладные и УПД. До ${S.ops_free} документов в месяц входят в базу. Сверх лимита каждый начатый пакет из ${DOC_PACK_SIZE} документов стоит ${rub(Math.max(0, S.doc_pack_rate))}.`;
   const c=calcBuh(), sp=S.spread/100, L=lvl(c.m), mt=accountingMonthly(c);
+  $("b_opsnote").textContent = `Всего операций за месяц — ${c.operations.count}. В базу входит до ${S.ops_free}. Дополнительный пакет из ${OP_PACK_SIZE} операций — ${rub(Math.max(0, S.doc_pack_rate))}.`;
+  $("b_opsrules").innerHTML = OP_SCOPE.map(rule => `<li>${rule}</li>`).join("");
   $("b_empnote").classList.toggle("hide", !c.payrollIncluded);
   $("b_empnote").textContent = c.payrollIncluded ? `На каждое ООО включены расчёт зарплаты и отчётность за 1 сотрудника. Сверх включённого лимита — ${rub(S.emp_rate)} за сотрудника в месяц.` : "";
   $("b_payroll_group").classList.toggle("hide", fm!=="group" || !c.payrollIncluded || $("b_pay").value!=="1");
@@ -862,7 +879,7 @@ function renderBuh(){
   $("b_callnote").textContent=`Созвон входит всегда: 1 час в месяц — со мной ${rub(S.i_hour)}, с сотрудником ${rub(S.i_hour_staff)}. Нужно больше — укажите общее число часов, цена вырастет.`;
   $("b_price").innerHTML=bigPrice(mt," / мес");
   $("b_range").textContent=`Вилка: ${rub(r500(mt*(1-sp)))} – ${rub(r500(mt*(1+sp)))}`;
-  $("b_level").innerHTML=`<span class="pill ${L[1]}">Уровень: ${L[0]}</span>`+(c.documentWarning?` <span class="pill warn">${c.documentWarning}</span>`:"");
+  $("b_level").innerHTML=`<span class="pill ${L[1]}">Уровень: ${L[0]}</span>`+(c.operations.warning?` <span class="pill warn">${c.operations.warning}</span>`:"");
   const t=c.items.map(x=>[c1wrap(x[0]),x[1]]);
   t.push(["Вопросы и коммуникация в чате","бесплатно"]);
   t.push([`Созвон ${whoTxt(c.staff,c.online)}: ${c.callH} ч в месяц (1 час — ${rub(hrRate(c.staff,c.online))})`,rub(c.callV)]);
@@ -968,7 +985,7 @@ function packCard(el, name, keys, c, acc) {
   t.push([`Скидка за пакет ${pack.discountRate}%`, pack.discount ? "−" + rub(pack.discount) : rub(0), "sec sd"]);
   if (taxRate()) t.push(["Стоимость со скидкой до налоговой надбавки", rub(pack.total), "tot"]);
   t.push(...taxRows(pack.total, "Итого со скидкой в месяц"));
-  const warning = acc && c.documentWarning ? c.documentWarning + " " : "";
+  const warning = acc && c.operations.warning ? c.operations.warning + " " : "";
   el.innerHTML = `<h2>${name}</h2><div class="big">${bigPrice(pack.total," / мес")}</div><table style="margin-top:12px">${rows(t)}</table><div class="note">${warning}Для постов: ≈ ${rub(pack.total / 30)} в день.</div>`;
 }
 
@@ -1138,8 +1155,8 @@ function listData(){
   const B=[],M=[],N=[],P=[],A=[];
   Object.entries(RN).forEach(([key, label])=>B.push([`Базовое обслуживание: ${label}`,rub(S["base_"+key]),"в месяц",BASE_SCOPE[key]]));
   B.push(["Бухгалтерский учёт ООО — дополнительно к базе по налоговому режиму","+"+rub(S.add_ooo),"в месяц",LLC_SCOPE],
-   [`Первичные документы: до ${S.ops_free} в месяц входят в базу`,"—",""],
-   [`Дополнительный пакет из ${DOC_PACK_SIZE} документов (до ${S.ops_max} документов в месяц)`,rub(Math.max(0, S.doc_pack_rate)),"в месяц"],
+   [`До ${S.ops_free} операций суммарно входят в базу`,"включено","в месяц",OP_SCOPE],
+   [`Дополнительный пакет из ${OP_PACK_SIZE} операций (до ${S.ops_max} операций в месяц)`,rub(Math.max(0, S.doc_pack_rate)),"в месяц"],
    ["Расчёт зарплаты и отчётность, за 1 сотрудника (для ООО — сверх одного включённого)",rub(S.emp_rate),"в месяц",PAYROLL_SCOPE],
    ["Кадровый учёт, доплата за 1 сотрудника",rub(Math.max(0, S.hr_rate)),"в месяц",HR_SCOPE],
    ["НДС 5% или 7% (на УСН)",rub(S.add_vat_usn),"в месяц"],["НДС 10% или 20%",rub(S.add_vat),"в месяц"],["НДС 10% и 20% вместе",rub(S.add_vat_mix),"в месяц"],
@@ -1224,7 +1241,7 @@ function buildSpec(){
       const accountingRows = c.nums.map(([label, amount, text]) => R(label, "ежемесячно", amount, text));
       accountingRows.push(R(accountingCallLabel(c), "ежемесячно", c.callV));
       accountingRows.push(accountingTotal(accounting));
-      secs.push({t:"Бухгалтерское обслуживание (по расчёту клиента)", rows: accountingRows, note: c.documentWarning});
+      secs.push({t:"Бухгалтерское обслуживание (по расчёту клиента)", rows: accountingRows, note: c.operations.warning});
       const setup = accOnce();
       if (setup.length) secs.push({t:"Разовые услуги", rows: setup});
     }
@@ -1242,7 +1259,7 @@ function buildSpec(){
       const call = c.callV > 0 && !$("sp_m").checked ? c.callV : 0;
       if (call) rows.push(R(accountingCallLabel(c), "ежемесячно", call));
       rows.push(accountingTotal(c.m + call));
-      secs.push({t:"Бухгалтерское обслуживание", rows, note: c.documentWarning});
+      secs.push({t:"Бухгалтерское обслуживание", rows, note: c.operations.warning});
       monthly += c.m + call;
       const o=accOnce();if(o.length)secs.push({t:"Разовые услуги по бухгалтерии",rows:o});
     }
@@ -1331,7 +1348,7 @@ function buildSettings(){
       if(!valid){i.reportValidity();return}
     }
     S[key]=Number.isFinite(value)?value:0;
-    try{localStorage.setItem("opora_calc",JSON.stringify({...S,neylaMonthlyRateUpdated:true,goodsCostingRateUpdated:true,managementReportsRateUpdated:true,currentAuditRateUpdated:true,packageDiscountUpdated:true}))}catch(e){}
+    try{localStorage.setItem("opora_calc",JSON.stringify({...S,neylaMonthlyRateUpdated:true,goodsCostingRateUpdated:true,managementReportsRateUpdated:true,currentAuditRateUpdated:true,packageDiscountUpdated:true,operationVolumeUpdated:true}))}catch(e){}
     renderAll();
   }));
 }
