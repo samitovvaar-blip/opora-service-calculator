@@ -188,6 +188,9 @@ button:not(.tab):hover { background: #e9edf8; }
 .price-note { display: block; margin-top: 6px; color: #d5e1f1; font-size: 13px; font-weight: 450; }
 .pill { display: inline-block; margin-top: 7px; padding: 3px 10px; border-radius: 99px; background: var(--acc2); color: var(--acc); font-size: 12px; font-weight: 650; }
 .pill.ok { background: #e6f4eb; color: var(--ok); }
+.neyla-offers { margin: 8px 0 0; padding: 0; list-style: none; }
+.neyla-offers li { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 4px 8px; padding: 4px 0; font-size: 13px; }
+.neyla-offers .pill { margin-top: 0; }
 .pill.warn { background: #fff0dd; color: var(--warn); }
 table { width: 100%; border-collapse: collapse; font-size: 14px; }
 td { padding: 8px 0; border-bottom: 1px solid var(--line); vertical-align: top; overflow-wrap: anywhere; }
@@ -456,6 +459,7 @@ td > details { margin: 0; }
       <select id="n_cabinet"><option value="services">Кабинет услуг</option><option value="goods">Кабинет товаров</option></select>
       <label for="n_per">Срок подписки</label>
       <select id="n_per"><option value="trial" selected>Пробный месяц — бесплатно</option><option value="1">1 месяц</option><option value="3">3 месяца</option><option value="6">6 месяцев</option><option value="12">12 месяцев</option></select>
+      <ul id="n_offers" class="neyla-offers hide" aria-label="Цены и скидки за длительную подписку"></ul>
       <div id="n_callbox" class="hide">
         <label for="n_call" style="margin-top:10px">Ежемесячный созвон по итогам месяца</label>
         <select id="n_call"><option value="no">Не нужен</option><option value="me">Со мной</option><option value="staff">С моим сотрудником</option></select>
@@ -699,7 +703,7 @@ const DEF = {
   lvl_light:15000, lvl_std:25000, spread:10,
   i_dds:15000, i_ost:5000, i_call:7000, i_chat:0, i_app:3000, i_hour_online:2500, i_plan:10000, i_call2:7000, i_goods:6000, i_hour:3500, i_hour_staff:2000,
   pk_disc:10,
-  n1:3500, n3:8100, n6:15000, n12:20400, n_goods:10000,
+  n1:3500, n3:8100, n6:15000, n12:20400, n_goods:10000, n_goods3:23000, n_goods6:42000, n_goods12:58000,
   au_k1:15000, au_system:10000, ny_me:3500, ny_staff:2000, i_tbl:2000, i_office:2000, au_rush:30
 };
 const LBL = {
@@ -710,6 +714,7 @@ const LBL = {
   i_dds:"Состав: ДДС и ОПиУ каждый месяц, ₽",i_hour_staff:"Созвон или встреча с сотрудником, 1 час, ₽",i_hour_online:"Дополнительная встреча со мной онлайн, 1 час, ₽",i_ost:"Состав: контроль остатков дебиторки/кредиторки (платёжный календарь), ₽",i_call:"Созвон или встреча с отчётом владельцу и рекомендациями, 2 часа, ₽",i_chat:"Состав: вопросы и коммуникация в чате, ₽ (0 = бесплатно)",i_app:"Состав: доступ к приложению и боту НЕЙЛА, ₽",i_plan:"Контроль: бюджет и план-факт, ₽",i_call2:"Контроль: второй созвон в месяц (2 часа), ₽",i_hour:"Дополнительный час созвона или встречи, ₽",i_goods:"Доп к управленке: товарный учёт, ₽",
   pk_disc:"Скидка за пакет (Цифры, Контроль) от суммы услуг, %",
   n1:"НЕЙЛА: кабинет услуг, 1 мес., ₽",n3:"НЕЙЛА: кабинет услуг, 3 мес., ₽",n6:"НЕЙЛА: кабинет услуг, 6 мес., ₽",n12:"НЕЙЛА: кабинет услуг, 12 мес., ₽",n_goods:"НЕЙЛА: кабинет товаров, за месяц, ₽",
+  n_goods3:"НЕЙЛА: кабинет товаров, 3 мес., ₽",n_goods6:"НЕЙЛА: кабинет товаров, 6 мес., ₽",n_goods12:"НЕЙЛА: кабинет товаров, 12 мес., ₽",
   au_k1:"Аудит текущей бухгалтерии, фиксированная цена, ₽",au_system:"Построение системы, разовая цена, ₽",ny_me:"НЕЙЛА: ежемесячный созвон со мной, ₽",ny_staff:"НЕЙЛА: ежемесячный созвон с сотрудником, ₽",au_tbl:"Аудит: анализ прочих таблиц, за одну таблицу, ₽",i_tbl:"Таблицы (создание/проверка/анализ), за одну, ₽",i_office:"Сборка цифрового офиса, ₽",au_rush:"Восстановление бухучёта: наценка за срочность, %"
 };
 let S = {...DEF};
@@ -1008,17 +1013,15 @@ const NEYLA_CABINETS = {
   goods: { name: "Кабинет товаров", monthlyRate: "n_goods" }
 };
 function neylaTariff(cabinetType, months) {
-  const serviceMonthly = Math.max(0, S.n1);
-  const servicePrice = Math.max(0, S["n" + months]);
-  const serviceBaseline = serviceMonthly * months;
-  const discountRate = serviceBaseline > 0 ? Math.max(0, 1 - servicePrice / serviceBaseline) : 0;
-  const price = cabinetType === "goods"
-    ? Math.round(Math.max(0, S.n_goods) * months * (1 - discountRate))
-    : servicePrice;
-  const discount = discountRate > 0
-    ? `скидка ${(discountRate * 100).toLocaleString("ru-RU", {maximumFractionDigits: 2})}%`
+  const monthly = Math.max(0, S[NEYLA_CABINETS[cabinetType].monthlyRate]);
+  const termKey = (cabinetType === "goods" ? "n_goods" : "n") + months;
+  const price = months === 1 ? monthly : Math.max(0, S[termKey]);
+  const baseline = monthly * months;
+  const savings = Math.max(0, baseline - price);
+  const discount = savings > 0
+    ? `скидка ${(savings / baseline * 100).toLocaleString("ru-RU", {maximumFractionDigits: 2})}%`
     : "";
-  return {price, discount};
+  return {price, discount, savings};
 }
 function calcNeyla() {
   const cabinetType = $("n_cabinet").value;
@@ -1042,6 +1045,13 @@ function calcNeyla() {
 
 function renderNeyla() {
   const {cabinet, label, months, trial, monthlyRate, subscription, call, total} = calcNeyla();
+  const showOffers = cabinet === NEYLA_CABINETS.goods;
+  $("n_offers").classList.toggle("hide", !showOffers);
+  $("n_offers").innerHTML = showOffers ? [3, 6, 12].map(term => {
+    const {price, discount, savings} = neylaTariff("goods", term);
+    const badge = savings ? `<span class="pill ok">−${rub(savings)} · ${discount}</span>` : "";
+    return `<li><span>${term} мес. — <strong>${rub(price)}</strong></span>${badge}</li>`;
+  }).join("") : "";
   $("n_callbox").classList.toggle("hide", trial);
   $("n_note").textContent = trial
     ? `Пробный месяц доступен новым клиентам. После пробного месяца подписка на «${cabinet.name}» стоит ${rub(monthlyRate)} в месяц.`
@@ -1668,7 +1678,7 @@ buildSettings();renderAll();
     ["Бухгалтерия", ["add_kkt", "add_wh_serv", "add_wh", "add_wh_mix", "base_npd", "base_patent", "base_ausn8", "base_ausn15", "base_usn6", "base_usn15", "base_osno", "add_ooo", "doc_pack_rate", "emp_rate", "hr_rate", "add_vat", "add_vat_usn", "add_vat_mix", "add_ved", "add_mp", "one_c", "c1_t1", "c1_t2", "c1_t3", "c1_t4"]],
     ["Управленческий учёт", ["i_dds", "i_ost", "i_call", "i_chat", "i_app", "i_plan", "i_call2", "i_goods", "i_hour", "i_hour_online", "i_hour_staff", "i_tbl", "i_office"]],
     ["Аудит", ["au_k1", "au_system"]],
-    ["НЕЙЛА", ["n1", "n3", "n6", "n12", "n_goods", "ny_me", "ny_staff"]]
+    ["НЕЙЛА", ["n1", "n3", "n6", "n12", "n_goods", "n_goods3", "n_goods6", "n_goods12", "ny_me", "ny_staff"]]
   ];
   const overrides = {
     add_kkt: "Ведение кассы / ККТ (1 касса)",
