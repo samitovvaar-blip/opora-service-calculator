@@ -551,6 +551,11 @@ td > details { margin: 0; }
         <h2 style="margin:0">Перечень всего: что и сколько стоит</h2>
         <button type="button" id="l_copy" style="margin:0">Скопировать текстом (для договора)</button>
       </div>
+      <details class="settings noprint">
+        <summary>Настройки (цены и коэффициенты)</summary>
+        <div class="set" id="settings"></div>
+        <button type="button" id="reset">Сбросить к исходным</button>
+      </details>
       <div id="l_body"></div>
       <div class="note" id="l_msg"></div>
     </div>
@@ -687,11 +692,6 @@ td > details { margin: 0; }
     </div>
   </section>
 
-  <details class="card settings">
-    <summary>Настройки (цены и коэффициенты)</summary>
-    <div class="set" id="settings"></div>
-    <button id="reset">Сбросить к исходным</button>
-  </details>
   </main>
 </div>
 
