@@ -508,7 +508,7 @@ td > details { margin: 0; }
           <li>Считаем стоимость по количеству месяцев, за которые нужны отчёты.</li>
         </ol>
       </details>
-      <div class="note">Срок — по согласованию.</div>
+      <div class="note" id="a_management_term"></div>
       <div id="a_management_options" class="hide">
         <label for="a_mgmt_mon">Месяцев восстановления управленческого учёта</label>
         <input type="number" id="a_mgmt_mon" value="1" min="1" step="1">
@@ -1036,8 +1036,7 @@ function renderNeyla() {
 
 const AUDIT_TERMS = {
   current: "10 дней",
-  accounting: "14 дней. Точный срок согласуем на созвоне и фиксируем в договоре",
-  custom: "По согласованию"
+  standard: "14 дней. Точный срок согласуем на созвоне и фиксируем в договоре"
 };
 
 function calcAudit() {
@@ -1059,18 +1058,18 @@ function calcAudit() {
   if (accounting) services.push({
     name: "Восстановление бухгалтерского учёта",
     calculation: `${rub(monthly)} × ${booksMonths} мес.`,
-    amount: booksSubtotal + rush, term: AUDIT_TERMS.accounting,
+    amount: booksSubtotal + rush, term: AUDIT_TERMS.standard,
     surcharge: urgent ? `Срочность +${urgencyRate}%: ${rub(rush)}` : "",
     result: `Бухгалтерский учёт восстановлен за ${booksMonths} мес.`
   });
   if (management) services.push({
     name: "Восстановление управленческого учёта",
     calculation: `${rub(S.i_dds)} × ${managementMonths} мес.`,
-    amount: S.i_dds * managementMonths, term: AUDIT_TERMS.custom,
+    amount: S.i_dds * managementMonths, term: AUDIT_TERMS.standard,
     result: `ДДС и ОПиУ за ${managementMonths} мес.`
   });
   if ($("a_k5").checked) services.push({
-    name: "Построение системы", amount: S.au_system, term: AUDIT_TERMS.custom,
+    name: "Построение системы", amount: S.au_system, term: AUDIT_TERMS.standard,
     result: "Налаженный бухгалтерский и управленческий учёт, регламенты для бухгалтера и финансиста и понятный порядок подготовки отчётности каждый месяц"
   });
 
@@ -1089,8 +1088,10 @@ function renderAudit() {
   $("a_accounting_rate").textContent = `Цена из вкладки «Бухгалтерия»: ${rub(a.monthly)} в месяц без налоговой надбавки.`;
   $("a_management_rate").textContent = `ДДС и ОПиУ: ${rub(S.i_dds)} за месяц.`;
   $("a_rushl").textContent = `Срочно (+${a.urgencyRate}% к восстановлению бухучёта)`;
-  $("a_accounting_term").textContent = "Срок: " + AUDIT_TERMS.accounting + ".";
-  $("a_system_terms").textContent = `${rub(S.au_system)} разово. Срок — по согласованию.`;
+  const term = `Срок — ${AUDIT_TERMS.standard}.`;
+  $("a_accounting_term").textContent = term;
+  $("a_management_term").textContent = term;
+  $("a_system_terms").textContent = `${rub(S.au_system)} разово. ${term}`;
   $("a_price").innerHTML = a.services.length ? bigPrice(a.total) : "Выбери услугу";
   const list = a.services.map(item => {
     const details = auditDetails(item);
@@ -1187,10 +1188,10 @@ function listData(){
   }
   A.push(
     ["Аудит текущей бухгалтерии", rub(S.au_k1), AUDIT_TERMS.current],
-    ["Восстановление бухгалтерского учёта", "Месячная цена из «Бухгалтерии» × период", AUDIT_TERMS.accounting],
+    ["Восстановление бухгалтерского учёта", "Месячная цена из «Бухгалтерии» × период", AUDIT_TERMS.standard],
     ["Срочное восстановление бухгалтерского учёта", `+${Math.max(0,S.au_rush)}%`, "к стоимости восстановления"],
-    ["Восстановление управленческого учёта (ДДС и ОПиУ)", rub(S.i_dds) + " за месяц", AUDIT_TERMS.custom],
-    ["Построение системы", rub(S.au_system) + " разово", AUDIT_TERMS.custom]
+    ["Восстановление управленческого учёта (ДДС и ОПиУ)", rub(S.i_dds) + " за месяц", AUDIT_TERMS.standard],
+    ["Построение системы", rub(S.au_system) + " разово", AUDIT_TERMS.standard]
   );
   return [["Бухгалтерия",B],["Управленческий учёт",M],["НЕЙЛА",N],["Пакеты",P],["Аудит",A],["Режим работы",[[HOURS_NOTE,"",""]]]];
 }
