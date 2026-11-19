@@ -404,11 +404,14 @@ td > details { margin: 0; }
   <!-- УПРАВЛЕНЧЕСКИЙ УЧЁТ -->
   <div id="t-mgmt" class="grid hide">
     <div class="card">
-      <h2 id="m_baseh">Всегда входит в управленческий учёт (база)</h2>
+      <h2>Тариф управленческого учёта</h2>
+      <label for="m_plan_choice">Выберите тариф</label>
+      <select id="m_plan_choice">
+        <option value="digits">Опора Цифры — стандартный</option>
+        <option value="control">Опора Контроль — полный</option>
+      </select>
+      <h2 id="m_baseh" style="margin-top:16px">Состав тарифа</h2>
       <div id="m_base"></div>
-      <div id="m_basegift"></div>
-      <h2 style="margin-top:16px">Ежемесячные допуслуги</h2>
-      <div id="m_list"></div>
       <label style="margin-top:6px">Созвоны и встречи: кто проводит</label><select id="m_who"><option value="me">Со мной</option><option value="staff">С моим сотрудником</option></select>
       <label style="margin-top:6px">Формат дополнительных встреч (со мной): офлайн или онлайн</label><select id="m_fmt"><option value="off">Офлайн</option><option value="on">Онлайн</option></select>
       <div class="row" style="margin-top:6px">
@@ -426,7 +429,6 @@ td > details { margin: 0; }
         <span id="m_officerate" class="service-rate"></span>
         <input type="checkbox" id="m_office" aria-describedby="m_officerate">
       </div>
-      <div class="note">В подарок при управленческом учёте: доступ к приложению и боту НЕЙЛА.</div>
     </div>
     <div class="card">
       <h2>Стоимость управленческого учёта</h2>
@@ -450,11 +452,14 @@ td > details { margin: 0; }
   <div id="t-neyla" class="grid hide">
     <div class="card">
       <h2>Подписка НЕЙЛА</h2>
-      <label>Срок</label>
-      <select id="n_per"><option value="1" selected>1 месяц</option><option value="3">3 месяца</option><option value="6">6 месяцев</option><option value="12">12 месяцев</option></select>
-      <div class="chk"><input type="checkbox" id="n_first_free" checked><label for="n_first_free" style="margin:0;color:inherit">Первый месяц подписки бесплатно</label></div>
-      <label style="margin-top:10px">Созвон раз в месяц: итоги результата месяца (доп. услуга)</label>
-      <select id="n_call"><option value="no">Не нужен</option><option value="me">Со мной</option><option value="staff">С моим сотрудником</option></select>
+      <label for="n_cabinet">Кабинет</label>
+      <select id="n_cabinet"><option value="services">Кабинет услуг</option><option value="goods">Кабинет товаров</option></select>
+      <label for="n_per">Срок подписки</label>
+      <select id="n_per"><option value="trial" selected>Пробный месяц — бесплатно</option><option value="1">1 месяц</option><option value="3">3 месяца</option><option value="6">6 месяцев</option><option value="12">12 месяцев</option></select>
+      <div id="n_callbox" class="hide">
+        <label for="n_call" style="margin-top:10px">Ежемесячный созвон по итогам месяца</label>
+        <select id="n_call"><option value="no">Не нужен</option><option value="me">Со мной</option><option value="staff">С моим сотрудником</option></select>
+      </div>
       <div class="note" id="n_note"></div>
     </div>
     <div class="card">
@@ -694,7 +699,7 @@ const DEF = {
   lvl_light:15000, lvl_std:25000, spread:10,
   i_dds:15000, i_ost:5000, i_call:7000, i_chat:0, i_app:3000, i_hour_online:2500, i_plan:10000, i_call2:7000, i_goods:6000, i_hour:3500, i_hour_staff:2000,
   pk_disc:10,
-  n1:3500, n3:8100, n6:15000, n12:20400,
+  n1:3500, n3:8100, n6:15000, n12:20400, n_goods:10000,
   au_k1:15000, au_system:10000, ny_me:3500, ny_staff:2000, i_tbl:2000, i_office:2000, au_rush:30
 };
 const LBL = {
@@ -704,7 +709,7 @@ const LBL = {
   lvl_light:"Граница «Лайт» до, ₽",lvl_std:"Граница «Стандарт» до, ₽",spread:"Вилка цены ±, %",
   i_dds:"Состав: ДДС и ОПиУ каждый месяц, ₽",i_hour_staff:"Созвон или встреча с сотрудником, 1 час, ₽",i_hour_online:"Дополнительная встреча со мной онлайн, 1 час, ₽",i_ost:"Состав: контроль остатков дебиторки/кредиторки (платёжный календарь), ₽",i_call:"Созвон или встреча с отчётом владельцу и рекомендациями, 2 часа, ₽",i_chat:"Состав: вопросы и коммуникация в чате, ₽ (0 = бесплатно)",i_app:"Состав: доступ к приложению и боту НЕЙЛА, ₽",i_plan:"Контроль: бюджет и план-факт, ₽",i_call2:"Контроль: второй созвон в месяц (2 часа), ₽",i_hour:"Дополнительный час созвона или встречи, ₽",i_goods:"Доп к управленке: товарный учёт, ₽",
   pk_disc:"Скидка за пакет (Цифры, Контроль) от суммы услуг, %",
-  n1:"НЕЙЛА 1 мес, ₽",n3:"НЕЙЛА 3 мес, ₽",n6:"НЕЙЛА 6 мес, ₽",n12:"НЕЙЛА 12 мес, ₽",
+  n1:"НЕЙЛА: кабинет услуг, 1 мес., ₽",n3:"НЕЙЛА: кабинет услуг, 3 мес., ₽",n6:"НЕЙЛА: кабинет услуг, 6 мес., ₽",n12:"НЕЙЛА: кабинет услуг, 12 мес., ₽",n_goods:"НЕЙЛА: кабинет товаров, за месяц, ₽",
   au_k1:"Аудит текущей бухгалтерии, фиксированная цена, ₽",au_system:"Построение системы, разовая цена, ₽",ny_me:"НЕЙЛА: ежемесячный созвон со мной, ₽",ny_staff:"НЕЙЛА: ежемесячный созвон с сотрудником, ₽",au_tbl:"Аудит: анализ прочих таблиц, за одну таблицу, ₽",i_tbl:"Таблицы (создание/проверка/анализ), за одну, ₽",i_office:"Сборка цифрового офиса, ₽",au_rush:"Восстановление бухучёта: наценка за срочность, %"
 };
 let S = {...DEF};
@@ -769,7 +774,6 @@ function managementExtras() {
   return extras;
 }
 function bigPrice(v,suf){const r=taxRate();suf=suf||"";if(!r)return rub(v)+suf;return `${rub(grossUp(v,r))}${suf} <span class="price-note">услуг на ${rub(v)} без налога</span>`}
-function gx(v){const r=taxRate();return r?grossUp(v,r):v}
 function taxRows(total,lab,skipNone){const r=taxRate();if(!r)return skipNone?[]:[[lab,rub(total),"tot"]];const g=grossUp(total,r);return [[`Налог ${r}% (${taxLabel()}), включён в сумму`,rub(g-total)],[lab.startsWith("Итого")?lab.replace("Итого","Итого к оплате"):"К оплате: "+lab.charAt(0).toLowerCase()+lab.slice(1),rub(g),"tot"]]}
 function plEmp(n){const a=n%100,b=n%10;return n+" "+((a>=11&&a<=14)?"сотрудников":b===1?"сотрудник":(b>=2&&b<=4)?"сотрудника":"сотрудников")}
 const OP_PACK_SIZE = 10;
@@ -911,9 +915,11 @@ function calcPackage(keys, accounting) {
   const discount = Math.round(subtotal * discountRate / 100);
   return {items, management, subtotal, discountRate, discount, total: subtotal - discount};
 }
-const MG_BASE=["dds","ost","call","app"], MG_ADD=["plan","call2","goods"];
-$("m_base").innerHTML=MG.filter(x=>MG_BASE.includes(x[0])).map(x=>`<div class="chk" style="margin:6px 0"><span style="color:var(--ok)">✓</span><span id="ml_${x[0]}"></span></div>`).join("");
-$("m_list").innerHTML=MG.filter(x=>MG_ADD.includes(x[0])).map(x=>`<div class="chk"><input type="checkbox" id="m_${x[0]}"><label style="margin:0;color:inherit" id="ml_${x[0]}"></label></div>`).join("");
+const MG_PLANS = {
+  digits: {name: "Опора Цифры", detail: "стандартный управленческий учёт", keys: PK1},
+  control: {name: "Опора Контроль", detail: "полный управленческий учёт", keys: PK2, team: true}
+};
+const MG_TEAM = ["Коммуникация с командой клиента", "уточняем данные и вопросы по отчётности у сотрудников клиента"];
 const whoM=()=>$("m_who").value==="staff";
 const hrRate=(st,on)=>st?S.i_hour_staff:(on?S.i_hour_online:S.i_hour);
 const onM=()=>$("m_fmt").value==="on";
@@ -922,12 +928,15 @@ function mgv(x){if(whoM()&&(x[0]==="call"||x[0]==="call2"))return [x[1].replace(
 const giftRow=(n,v)=>[n,v===0?"🎁 в подарок":rub(v)];
 const freeRow=(n,v)=>[n,v===0?"бесплатно":rub(v)];
 function renderMgmt(){
-  const {lines, sum: serviceTotal, ext} = getMgmt();
+  const {plan, services, lines, sum: serviceTotal, ext} = getMgmt();
   const sum = serviceTotal + S.i_chat;
-  for (const service of MG) {
+  const included = services.map(service => {
     const [name, amount] = mgv(service);
-    $("ml_" + service[0]).innerHTML = c1wrap(name, rub(amount));
-  }
+    return c1wrap(name, rub(amount));
+  });
+  if (plan.team) included.push(MG_TEAM[0] + " — включено");
+  $("m_baseh").textContent = "Что входит в «" + plan.name + "»";
+  $("m_base").innerHTML = included.map(item => `<div class="chk" style="margin:6px 0"><span aria-hidden="true" style="color:var(--ok)">✓</span><span>${item}</span></div>`).join("");
 
   const hrs = num("m_hrs");
   $("m_hrsnote").textContent = `Каждый дополнительный час — ${rub(hrRate(whoM(),onM()))} (${whoTxt(whoM(),onM())}). Базовый созвон или встреча (2 часа) включает отчёт владельцу и рекомендации.`;
@@ -936,6 +945,7 @@ function renderMgmt(){
 
   const t = lines.map(([name, amount]) => [c1wrap(name), rub(amount)]);
   const chat = freeRow("Вопросы и коммуникация в чате", S.i_chat);
+  if (plan.team) t.push([MG_TEAM[0], "включено"]);
   t.push(chat, ...taxRows(sum, "Итого в месяц"));
   if (ext.length) {
     t.push(["Разовые допуслуги", "", "sec sm"]);
@@ -944,14 +954,11 @@ function renderMgmt(){
     t.push(...taxRows(oneOffTotal, "Итого разово"));
   }
 
-  const base = MG.filter(service => MG_BASE.includes(service[0]))
-    .reduce((total, service) => total + mgv(service)[1], S.i_chat);
-  $("m_baseh").textContent = "Всегда входит в управленческий учёт (база) — " + rub(gx(base));
-  $("m_basegift").textContent = "✓ " + chat.join(" — ");
   $("m_price").innerHTML=bigPrice(sum," / мес");
   $("m_tbl").innerHTML=rows(t);
   {const TX={dds:["ДДС и ОПиУ","ежемесячные отчёты: куда уходят деньги и сколько прибыли"],ost:["Платёжный календарь","контроль остатков, дебиторки, кредиторки и кассовых разрывов"],call:["Созвон или встреча "+whoTxt(whoM()),"раз в месяц, 2 часа: отчёт владельцу, разбор цифр и конкретные рекомендации"],plan:["Бюджет и план-факт","сравнение плана с фактом, отклонения и их причины"],call2:["Второй созвон или встреча "+whoTxt(whoM(),onM()),"ещё 2 часа в месяц"],goods:["Товарный учёт","остатки, оборачиваемость и движение товаров"],app:["Доступ к приложению и боту НЕЙЛА","приложение для просмотра ключевых показателей бизнеса"]};
-   const R=MG.filter(x=>MG_BASE.includes(x[0])||$("m_"+x[0]).checked).map(x=>TX[x[0]]);
+   const R=services.map(x=>TX[x[0]]);
+   if(plan.team)R.push(MG_TEAM);
    if(hrs>0)R.push(["Дополнительные часы",hrs+" ч встреч или созвонов"]);
    R.push(["Чат", chat.join(" — ")]);
    if (num("m_tblc") >= 0.5) R.push(["Прочие таблицы", "готовые таблицы под ваши задачи (разово)"]);
@@ -996,37 +1003,45 @@ function renderPack() {
   packCard($("pk2"), "ОПОРА-Контроль", PK2, c, acc);
 }
 
+const NEYLA_CABINETS = {
+  services: { name: "Кабинет услуг", monthlyRate: "n1" },
+  goods: { name: "Кабинет товаров", monthlyRate: "n_goods" }
+};
 function calcNeyla() {
-  const months = Number($("n_per").value);
-  const free = $("n_first_free").checked;
-  const tariff = S["n" + months];
-  const discount = free ? Math.round(tariff / months) : 0;
-  const subscription = tariff - discount;
+  const cabinetType = $("n_cabinet").value;
+  const cabinet = NEYLA_CABINETS[cabinetType];
+  const period = $("n_per").value;
+  const trial = period === "trial";
+  const months = trial ? 1 : Number(period);
+  const label = `${cabinet.name} — ${trial ? "пробный месяц" : months + " мес."}`;
+  const monthlyRate = Math.max(0, S[cabinet.monthlyRate]);
+  const subscription = trial ? 0 : cabinetType === "goods" ? monthlyRate * months : Math.max(0, S["n" + months]);
   const callType = $("n_call").value;
   const callRate = callType === "me" ? S.ny_me : S.ny_staff;
-  const call = callType === "no" ? null : {
+  const call = trial || callType === "no" ? null : {
     name: callType === "me" ? "со мной" : "с моим сотрудником",
     rate: callRate,
     total: callRate * months
   };
-  return {months, free, tariff, discount, subscription, call, total: subscription + (call?.total ?? 0)};
+  return {cabinet, label, months, trial, monthlyRate, subscription, call, total: subscription + (call?.total ?? 0)};
 }
 
 function renderNeyla() {
-  const {months, free, tariff, discount, subscription, call, total} = calcNeyla();
-  $("n_note").textContent = `Помесячная подписка — ${rub(S.n1)}. Настройка шаблона и приложения и первичная консультация — в подарок. Дополнительные ежемесячные созвоны оплачиваются отдельно: со мной ${rub(S.ny_me)}, с сотрудником ${rub(S.ny_staff)}.`;
+  const {cabinet, label, months, trial, monthlyRate, subscription, call, total} = calcNeyla();
+  $("n_callbox").classList.toggle("hide", trial);
+  $("n_note").textContent = trial
+    ? `Пробный месяц доступен новым клиентам. После пробного месяца подписка на «${cabinet.name}» стоит ${rub(monthlyRate)} в месяц.`
+    : `Месяц подписки на «${cabinet.name}» стоит ${rub(monthlyRate)}. Ежемесячный созвон можно добавить отдельно — ${rub(S.ny_me)} со мной или ${rub(S.ny_staff)} с сотрудником.`;
   $("n_price").textContent = rub(total);
-  const t = [["Подписка за выбранный срок", rub(tariff)]];
-  if (free) t.push(["Первый месяц подписки бесплатно", discount ? "−" + rub(discount) : rub(0)]);
-  t.push(["Стоимость подписки за период", rub(subscription)]);
+  const t = [[label, rub(subscription)]];
   t.push(giftRow("Настройка шаблона и приложения", 0), giftRow("Первичный созвон, консультация", 0));
   if (call) t.push([`Созвон раз в месяц ${call.name}: ${rub(call.rate)} × ${months} мес.`, rub(call.total)]);
   t.push(["Итого за период (фиксированный тариф, налог не начисляется)", rub(total), "tot"]);
-  t.push(["В день (для постов)", rub(subscription / (months * 30))]);
+  if (!trial) t.push(["В день (для постов)", rub(subscription / (months * 30))]);
   $("n_tbl").innerHTML = rows(t);
 
   const result = [
-    ["Подписка НЕЙЛА", `${months} мес. доступа к боту и приложению`],
+    [cabinet.name, `${months} мес. доступа к боту и приложению`],
     ["Настройка шаблона и приложения", "под ваш бизнес — в подарок"],
     ["Первичный созвон, консультация", "в подарок"]
   ];
@@ -1116,7 +1131,18 @@ addRow("ip","usn6");addRow("ooo","usn6");
 $("g_add").onclick=()=>{addRow("ip","usn6");renderAll()};
 $("g_rows").addEventListener("click",e=>{if(e.target.classList.contains("gx")){e.target.closest(".grow").remove();renderAll()}});
 $("g_rows").addEventListener("change",e=>{if(e.target.classList.contains("gf")){e.target.closest(".grow").querySelector(".gr").classList.toggle("hide",e.target.value==="self")}});
-function getMgmt(){const lines=[];let sum=0;MG.forEach(x=>{if(MG_BASE.includes(x[0])||$("m_"+x[0]).checked){const v=mgv(x);lines.push([v[0],v[1]]);sum+=v[1]}});const hrs=num("m_hrs");if(hrs>0){const hv=Math.round(hrs*hrRate(whoM(),onM()));lines.push([`Дополнительные часы созвонов или встреч ${whoTxt(whoM(),onM())}: ${hrs} ч (1 час — ${rub(hrRate(whoM(),onM()))})`,hv]);sum+=hv}return {lines,sum,ext:managementExtras()}}
+function getMgmt(){
+  const plan = MG_PLANS[$("m_plan_choice").value];
+  const services = MG.filter(service => plan.keys.includes(service[0]));
+  const lines = services.map(mgv);
+  const hours = num("m_hrs");
+  if (hours > 0) {
+    const rate = hrRate(whoM(), onM());
+    lines.push([`Дополнительные часы созвонов или встреч ${whoTxt(whoM(),onM())}: ${hours} ч (1 час — ${rub(rate)})`, Math.round(hours * rate)]);
+  }
+  const sum = lines.reduce((total, [, amount]) => total + amount, 0);
+  return {plan, services, lines, sum, ext: managementExtras()};
+}
 const RN={npd:"Самозанятый / НПД",patent:"Патент",ausn8:"АУСН «доходы» 8%",ausn15:"АУСН «доходы−расходы» 15%",usn6:"УСН «доходы»",usn15:"УСН «доходы−расходы»",osno:"ОСНО"};
 const AUSN_SCOPE = [
   "Проверяем, как отражены операции в личном кабинете ФНС, и помогаем скорректировать их классификацию.",
@@ -1165,14 +1191,24 @@ function listData(){
    ["Касса / ККТ, за каждую кассу",rub(S.add_kkt),"в месяц"],["Маркетплейс (WB, Ozon, Яндекс Маркет), за каждый",rub(S.add_mp),"в месяц"],
    [`Группа компаний: каждая следующая компания`,`${S.grp_next}% от базы`,"в месяц"],
    [`Стандартное ведение базы 1С: до ${S.c1_b1} документов в месяц, за каждую базу`,rub(S.c1_t1),"в месяц"],[`Стандартное ведение базы 1С: ${S.c1_b1+1}–${S.c1_b2} документов`,rub(S.c1_t2),"в месяц"],[`Стандартное ведение базы 1С: ${S.c1_b2+1}–${S.c1_b3} документов`,rub(S.c1_t3),"в месяц"],[`Стандартное ведение базы 1С: свыше ${S.c1_b3} документов`,rub(S.c1_t4),"в месяц"],["Заведение базы 1С (если базы нет), за каждую",rub(S.one_c),"разово"],["База 1С не нужна","0 ₽",""],["Вопросы и коммуникация в чате","бесплатно",""],["Что входит в стандартное ведение 1С: "+C1_LIST.join("; ")+". "+C1_NOTE,"",""]);
-  MG.filter(x=>MG_BASE.includes(x[0])).forEach(x=>M.push([x[1]+" (входит всегда)",rub(S[x[2]]),"в месяц"]));
-  MG.filter(x=>MG_ADD.includes(x[0])).forEach(x=>M.push([x[1]+" (доп)",rub(S[x[2]]),"в месяц"]));
+  for (const plan of Object.values(MG_PLANS)) {
+    const services = MG.filter(service => plan.keys.includes(service[0]));
+    const total = services.reduce((sum, [, , rate]) => sum + S[rate], S.i_chat);
+    const scope = services.map(([, label]) => label);
+    if (plan.team) scope.push(MG_TEAM[0] + " — включено");
+    M.push([`${plan.name} — ${plan.detail}`, rub(total), "в месяц", scope]);
+  }
   M.push(["Прочие таблицы: создание, проверка или анализ (за одну таблицу)",rub(S.i_tbl),"разово"],["Сборка цифрового офиса (документы и таблицы всех отделов, структурированно)",rub(S.i_office),"разово"]);
   M.push(["Платёжный календарь включает: "+PC_LIST.join(", "),"",""]);
   M.push(["Дополнительный час встречи со мной офлайн (оплачивается отдельно)",rub(S.i_hour),"за час"],["Дополнительный час встречи со мной онлайн",rub(S.i_hour_online),"за час"],["Созвон или встреча (2 часа) с моим сотрудником вместо созвона со мной",rub(S.i_hour_staff*2),"в месяц"],["Дополнительный час созвона или встречи с сотрудником",rub(S.i_hour_staff),"за час"]);
   M.push(["Вопросы и коммуникация в чате",S.i_chat===0?"бесплатно":rub(S.i_chat),""]);
-  [[1,"n1"],[3,"n3"],[6,"n6"],[12,"n12"]].forEach(x=>N.push([`Подписка на ${x[0]} мес.`,rub(S[x[1]]),`${rub(S[x[1]]/x[0])} в месяц`]));
-  N.push(["Настройка шаблона и приложения","🎁 в подарок",""],["Первичный созвон, консультация (как работать с приложением, какие показатели смотреть)","🎁 в подарок",""],["Созвон раз в месяц: итоги результата месяца — со мной",rub(S.ny_me),"в месяц"],["Созвон раз в месяц: итоги результата месяца — с сотрудником",rub(S.ny_staff),"в месяц"],["Первый месяц подписки","бесплатно","для нового клиента"]);
+  N.push(["Пробный месяц для обоих кабинетов", "бесплатно", "для нового клиента"]);
+  [1, 3, 6, 12].forEach(months=>{
+    const rate = Math.max(0, S["n" + months]);
+    N.push([`Кабинет услуг — ${months} мес.`, rub(rate), `${rub(rate / months)} в месяц`]);
+  });
+  N.push(["Кабинет товаров", rub(Math.max(0, S.n_goods)), "в месяц"]);
+  N.push(["Настройка шаблона и приложения","🎁 в подарок",""],["Первичный созвон, консультация (как работать с приложением, какие показатели смотреть)","🎁 в подарок",""],["Созвон раз в месяц: итоги результата месяца — со мной",rub(S.ny_me),"в месяц"],["Созвон раз в месяц: итоги результата месяца — с сотрудником",rub(S.ny_staff),"в месяц"]);
   const packageAccounting = $("p_acc").value === "our" ? accountingMonthly(calcBuh()) : 0;
   for (const [name, keys] of [["ОПОРА-Цифры", PK1], ["ОПОРА-Контроль", PK2]]) {
     const pack = calcPackage(keys, packageAccounting);
@@ -1267,21 +1303,21 @@ function buildSpec(){
     if($("sp_m").checked){
       const m=getMgmt();
       const rows=m.lines.map(x=>R(x[0],"ежемесячно",x[1]));
+      if (m.plan.team) rows.push(R(MG_TEAM[0], "ежемесячно", 0, "включено"));
       [["Вопросы и коммуникация в чате",S.i_chat,"бесплатно"]].forEach(x=>rows.push(x[1]===0?R(x[0],"—",null,x[2]):R(x[0],"ежемесячно",x[1])));
       rows.push(managementTotal(m.sum + S.i_chat));
-      secs.push({t:"Управленческий учёт",rows});monthly+=m.sum+S.i_chat;
+      secs.push({t:`Управленческий учёт — ${m.plan.name}`,rows});monthly+=m.sum+S.i_chat;
       if(m.ext.length){secs.push({t:"Разовые допуслуги управленческого учёта",rows:m.ext.map(x=>R(x[0],"разово",x[1]))});once+=m.ext.reduce((a,x)=>a+x[1],0)}
     }
     if($("sp_n").checked){
       const n = calcNeyla();
       const rows = [
-        R(`Подписка НЕЙЛА, ${n.months} мес.`, "за период", n.tariff),
+        R(n.label, "за период", n.subscription),
         R("Настройка шаблона и приложения", "—", null, "🎁 в подарок"),
         R("Первичный созвон, консультация", "—", null, "🎁 в подарок")
       ];
-      if (n.free) rows.splice(1, 0, R("Первый месяц подписки бесплатно", "скидка", n.discount ? -n.discount : 0));
       if (n.call) rows.push(R(`Созвон раз в месяц ${n.call.name} (${rub(n.call.rate)} в месяц)`, "за период", n.call.total));
-      secs.push({t:"НЕЙЛА", rows});
+      secs.push({t:"НЕЙЛА", rows, note: n.trial ? `Пробный месяц доступен новым клиентам. Далее — ${rub(n.monthlyRate)} в месяц.` : ""});
       fixed += n.total;
     }
   }
@@ -1609,7 +1645,7 @@ buildSettings();renderAll();
     ["Бухгалтерия", ["add_kkt", "add_wh_serv", "add_wh", "add_wh_mix", "base_npd", "base_patent", "base_ausn8", "base_ausn15", "base_usn6", "base_usn15", "base_osno", "add_ooo", "doc_pack_rate", "emp_rate", "hr_rate", "add_vat", "add_vat_usn", "add_vat_mix", "add_ved", "add_mp", "one_c", "c1_t1", "c1_t2", "c1_t3", "c1_t4"]],
     ["Управленческий учёт", ["i_dds", "i_ost", "i_call", "i_chat", "i_app", "i_plan", "i_call2", "i_goods", "i_hour", "i_hour_online", "i_hour_staff", "i_tbl", "i_office"]],
     ["Аудит", ["au_k1", "au_system"]],
-    ["НЕЙЛА", ["n1", "n3", "n6", "n12", "ny_me", "ny_staff"]]
+    ["НЕЙЛА", ["n1", "n3", "n6", "n12", "n_goods", "ny_me", "ny_staff"]]
   ];
   const overrides = {
     add_kkt: "Ведение кассы / ККТ (1 касса)",
