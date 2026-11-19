@@ -350,7 +350,7 @@ td > details { margin: 0; }
       </div>
       <h2 style="margin-top:16px">Операции за месяц</h2>
       <div class="row" aria-describedby="b_opsnote">
-        <div><label for="b_bankops">Банковские операции</label><input type="number" id="b_bankops" placeholder="0" min="0" step="1" aria-describedby="b_bankops_help"><div class="note" id="b_bankops_help">Поступления и списания по выписке</div></div>
+        <div><label for="b_bankops">Банковские операции</label><input type="number" id="b_bankops" value="30" min="0" step="1" aria-describedby="b_bankops_help"><div class="note" id="b_bankops_help">Поступления и списания по выписке</div></div>
         <div><label for="b_ops">Первичные документы</label><input type="number" id="b_ops" value="30" min="0" step="1" aria-describedby="b_docs_help"><div class="note" id="b_docs_help">Акты, накладные, УПД и другие документы</div></div>
         <div><label for="b_otherops">Прочие ручные операции</label><input type="number" id="b_otherops" placeholder="0" min="0" step="1" aria-describedby="b_otherops_help"><div class="note" id="b_otherops_help">Отдельные корректировки, зачёты и списания</div></div>
       </div>
@@ -708,7 +708,7 @@ td > details { margin: 0; }
 <script>
 const DEF = {
   base_npd:5000, base_patent:5000, base_ausn8:6000, base_ausn15:8000, base_usn6:7000, base_usn15:9000, base_osno:15000,
-  add_ooo:3000, ops_free:50, doc_pack_rate:1500, ops_max:150, emp_rate:800, hr_rate:500, grp_next:80, tax_ip:6, tax_fl:4,
+  add_ooo:3000, ops_free:60, doc_pack_rate:1500, ops_max:150, emp_rate:800, hr_rate:500, grp_next:80, tax_ip:6, tax_fl:4,
   add_vat:4000, add_vat_usn:3000, add_vat_mix:5000, add_ved:8000, add_wh:3000, add_wh_serv:3000, add_wh_mix:6000, add_kkt:2000, add_mp:3000, one_c:5000, c1_b1:50, c1_b2:100, c1_b3:150, c1_t1:2000, c1_t2:3000, c1_t3:4000, c1_t4:5000,
   lvl_light:15000, lvl_std:25000, spread:10,
   i_dds:15000, i_ost:5000, i_call:7000, i_chat:0, i_app:3000, i_hour_online:2500, i_plan:10000, i_call2:7000, i_goods:6000, i_hour:3500, i_hour_staff:2000,
@@ -718,7 +718,7 @@ const DEF = {
 };
 const LBL = {
   base_npd:"База: НПД, ₽",base_patent:"База: патент, ₽",base_ausn8:"База: АУСН доходы 8%, ₽",base_ausn15:"База: АУСН доходы−расходы 15%, ₽",base_usn6:"База: УСН доходы, ₽",base_usn15:"База: УСН доходы−расходы, ₽",base_osno:"База: ОСНО, ₽",
-  add_ooo:"Бухгалтерский учёт ООО, доплата к базе, ₽",ops_free:"Бухгалтерия: операций в месяц включено в базу",doc_pack_rate:"Пакет из 10 операций, ₽",ops_max:"Предел операций в месяц (дальше индивидуально)",emp_rate:"Расчёт зарплаты и отчётность: за сотрудника в месяц, ₽",hr_rate:"Кадровый учёт: доплата за сотрудника в месяц, ₽",grp_next:"Группа: каждая следующая компания, % от базы",tax_ip:"Налог, если платит ИП или ООО, %",tax_fl:"Налог, если платит физлицо, %",
+  add_ooo:"Бухгалтерский учёт ООО, доплата к базе, ₽",ops_free:"Бухгалтерия: операций в месяц включено в базу",doc_pack_rate:"Стоимость 10 дополнительных операций (150 ₽ за одну), ₽",ops_max:"Предел операций в месяц (дальше индивидуально)",emp_rate:"Расчёт зарплаты и отчётность: за сотрудника в месяц, ₽",hr_rate:"Кадровый учёт: доплата за сотрудника в месяц, ₽",grp_next:"Группа: каждая следующая компания, % от базы",tax_ip:"Налог, если платит ИП или ООО, %",tax_fl:"Налог, если платит физлицо, %",
   add_vat:"НДС 10% или 20%, ₽",add_vat_usn:"НДС 5%/7% (на УСН), ₽",add_vat_mix:"НДС 10% и 20% вместе, ₽",add_ved:"ВЭД, ₽",add_wh:"Себестоимость: товарный бизнес, ₽",add_wh_serv:"Себестоимость: бизнес услуг, ₽",add_wh_mix:"Себестоимость: товары и услуги, ₽",add_kkt:"Касса/ККТ, за каждую кассу, ₽",add_mp:"За маркетплейс, ₽",one_c:"1С: заведение базы, разово (за одну базу), ₽",c1_b1:"1С: граница уровня 1 (документов в месяц на базу)",c1_b2:"1С: граница уровня 2",c1_b3:"1С: граница уровня 3",c1_t1:"1С: ведение, уровень 1 (до границы 1), ₽/мес за базу",c1_t2:"1С: ведение, уровень 2, ₽/мес за базу",c1_t3:"1С: ведение, уровень 3, ₽/мес за базу",c1_t4:"1С: ведение, свыше границы 3, ₽/мес за базу",
   lvl_light:"Граница «Лайт» до, ₽",lvl_std:"Граница «Стандарт» до, ₽",spread:"Вилка цены ±, %",
   i_dds:"Состав: ДДС и ОПиУ каждый месяц, ₽",i_hour_staff:"Созвон или встреча с сотрудником, 1 час, ₽",i_hour_online:"Дополнительная встреча со мной онлайн, 1 час, ₽",i_ost:"Состав: контроль остатков дебиторки/кредиторки (платёжный календарь), ₽",i_call:"Созвон или встреча с отчётом владельцу и рекомендациями, 2 часа, ₽",i_chat:"Состав: вопросы и коммуникация в чате, ₽ (0 = бесплатно)",i_app:"Состав: доступ к приложению и боту НЕЙЛА, ₽",i_plan:"Контроль: бюджет и план-факт, ₽",i_call2:"Контроль: второй созвон в месяц (2 часа), ₽",i_hour:"Дополнительный час созвона или встречи, ₽",i_goods:"Доп к управленке: товарный учёт, ₽",
@@ -741,6 +741,7 @@ try {
       if (rates.ops_free === 30) rates.ops_free = DEF.ops_free;
       if (rates.c1_b1 === 30) rates.c1_b1 = DEF.c1_b1;
     }
+    if (rates.ops_free === 50) rates.ops_free = DEF.ops_free;
     S = {...DEF, ...rates};
   }
 } catch (e) {}
@@ -801,12 +802,10 @@ const OP_SCOPE = [
 function operationPackage(bank, docs, other) {
   const count = bank + docs + other;
   const extra = Math.max(0, Math.min(count, S.ops_max) - S.ops_free);
-  const packs = Math.ceil(extra / OP_PACK_SIZE);
-  const limit = Math.min(S.ops_free + packs * OP_PACK_SIZE, S.ops_max);
-  const rate = Math.max(0, S.doc_pack_rate);
-  const label = `Операции за месяц — ${count} (банк — ${bank}, первичка — ${docs}, прочие — ${other}). Лимит пакета — ${limit}`;
+  const rate = Math.max(0, S.doc_pack_rate) / OP_PACK_SIZE;
+  const label = `Операции за месяц — ${count} (банк — ${bank}, первичка — ${docs}, прочие — ${other}). Включено ${S.ops_free}, сверх лимита — ${extra} × ${rub(rate)}`;
   const warning = count > S.ops_max ? `Свыше ${S.ops_max} операций в месяц стоимость рассчитывается индивидуально.` : "";
-  return { count, label, price: packs * rate, warning };
+  return { count, label, price: extra * rate, warning };
 }
 function calcBuh(){
   const docs=Math.ceil(num("b_ops")), emp=Math.floor(num("b_emp"));
@@ -886,7 +885,7 @@ function renderBuh(){
   $("b_kktbox").classList.toggle("hide",!$("b_kkt").checked);
   $("b_mpbox").classList.toggle("hide",!$("b_mpon").checked);
   const c=calcBuh(), sp=S.spread/100, L=lvl(c.m), mt=accountingMonthly(c);
-  $("b_opsnote").textContent = `Всего операций за месяц — ${c.operations.count}. В базу входит до ${S.ops_free}. Дополнительный пакет из ${OP_PACK_SIZE} операций — ${rub(Math.max(0, S.doc_pack_rate))}.`;
+  $("b_opsnote").textContent = `Всего операций за месяц — ${c.operations.count}. В базу входит до ${S.ops_free} (обычно 30 банковских и 30 первичных). Каждая следующая — ${rub(Math.max(0, S.doc_pack_rate) / OP_PACK_SIZE)}.`;
   $("b_opsrules").innerHTML = OP_SCOPE.map(rule => `<li>${rule}</li>`).join("");
   $("b_empnote").classList.toggle("hide", !c.payrollIncluded);
   $("b_empnote").textContent = c.payrollIncluded ? `На каждое ООО включены расчёт зарплаты и отчётность за 1 сотрудника. Сверх включённого лимита — ${rub(S.emp_rate)} за сотрудника в месяц.` : "";
@@ -938,15 +937,15 @@ const whoM=()=>$("m_who").value==="staff";
 const hrRate=(st,on)=>st?S.i_hour_staff:(on?S.i_hour_online:S.i_hour);
 const onM=()=>$("m_fmt").value==="on";
 const whoTxt=(st,on)=>st?"с моим сотрудником":(on?"со мной онлайн":"со мной");
-function mgv(x){if(whoM()&&(x[0]==="call"||x[0]==="call2"))return [x[1].replace("со мной","с моим сотрудником"),S.i_hour_staff*2];if(!whoM()&&x[0]==="call2"&&onM())return [x[1].replace("со мной","со мной онлайн"),S.i_hour_online*2];return [x[1],S[x[2]]]}
+function mgv(x,planKey=$("m_plan_choice").value){if(x[0]==="app"&&planKey==="control")return [x[1],0];if(whoM()&&(x[0]==="call"||x[0]==="call2"))return [x[1].replace("со мной","с моим сотрудником"),S.i_hour_staff*2];if(!whoM()&&x[0]==="call2"&&onM())return [x[1].replace("со мной","со мной онлайн"),S.i_hour_online*2];return [x[1],S[x[2]]]}
 const giftRow=(n,v)=>[n,v===0?"🎁 в подарок":rub(v)];
 const freeRow=(n,v)=>[n,v===0?"бесплатно":rub(v)];
 function renderMgmt(){
   const {plan, services, lines, sum: serviceTotal, ext} = getMgmt();
   const sum = serviceTotal + S.i_chat;
   const included = services.filter(([key]) => plan.keys.includes(key)).map(service => {
-    const [name, amount] = mgv(service);
-    return c1wrap(name, rub(amount));
+    const [name, amount] = mgv(service, $("m_plan_choice").value);
+    return c1wrap(name, amount === 0 ? "включено бесплатно" : rub(amount));
   });
   if (plan.team) included.push(MG_TEAM[0] + " — включено");
   $("m_baseh").textContent = "Что входит в «" + plan.name + "»";
@@ -963,7 +962,7 @@ function renderMgmt(){
   $("m_tblrate").textContent = `${rub(S.i_tbl)} за таблицу`;
   $("m_officerate").textContent = `${rub(S.i_office)} разово`;
 
-  const t = lines.map(([name, amount]) => [c1wrap(name), rub(amount)]);
+  const t = lines.map(([name, amount]) => [c1wrap(name), name === MG.find(([key]) => key === "app")[1] && plan === MG_PLANS.control ? "включено бесплатно" : rub(amount)]);
   const chat = freeRow("Вопросы и коммуникация в чате", S.i_chat);
   if (plan.team) t.push([MG_TEAM[0], "включено"]);
   t.push(chat, ...taxRows(sum, "Итого в месяц"));
@@ -1000,7 +999,7 @@ function accountingPriceRows(c) {
 function packCard(el, planKey, c, acc) {
   const accounting = acc ? accountingMonthly(c) : 0;
   const pack = calcPackage(planKey, accounting);
-  const managementRows = pack.items.map(([label, amount]) => [c1wrap(label), rub(amount)]);
+  const managementRows = pack.items.map(([label, amount]) => [c1wrap(label), label === MG.find(([key]) => key === "app")[1] && planKey === "control" ? "включено бесплатно" : rub(amount)]);
   managementRows.push(freeRow("Вопросы и коммуникация в чате", S.i_chat));
   if (pack.plan.team) managementRows.push([MG_TEAM[0], "включено"]);
   if (!acc) managementRows.push(["Коммуникация с текущей бухгалтерией", "бесплатно"]);
@@ -1180,7 +1179,7 @@ function getMgmt(planKey = $("m_plan_choice").value){
   const plan = MG_PLANS[planKey];
   const addons = plan === MG_PLANS.digits ? MG_ADDONS.filter(([key]) => $("m_extra_" + key).checked) : [];
   const services = MG.filter(service => plan.keys.includes(service[0]) || addons.includes(service));
-  const lines = services.map(mgv);
+  const lines = services.map(service => mgv(service, planKey));
   const hours = num("m_hrs");
   if (hours > 0) {
     const rate = hrRate(whoM(), onM());
@@ -1228,8 +1227,8 @@ function listData(){
   const B=[],M=[],N=[],P=[],A=[];
   Object.entries(RN).forEach(([key, label])=>B.push([`Базовое обслуживание: ${label}`,rub(S["base_"+key]),"в месяц",BASE_SCOPE[key]]));
   B.push(["Бухгалтерский учёт ООО — дополнительно к базе по налоговому режиму","+"+rub(S.add_ooo),"в месяц",LLC_SCOPE],
-   [`До ${S.ops_free} операций суммарно входят в базу`,"включено","в месяц",OP_SCOPE],
-   [`Дополнительный пакет из ${OP_PACK_SIZE} операций (до ${S.ops_max} операций в месяц)`,rub(Math.max(0, S.doc_pack_rate)),"в месяц"],
+   [`До ${S.ops_free} операций суммарно входят в базу (30 банковских и 30 первичных по умолчанию)`,"включено","в месяц",OP_SCOPE],
+   [`Каждая операция сверх ${S.ops_free} (до ${S.ops_max} операций в месяц)`,rub(Math.max(0, S.doc_pack_rate) / OP_PACK_SIZE),"за операцию"],
    ["Расчёт зарплаты и отчётность, за 1 сотрудника (для ООО — сверх одного включённого)",rub(S.emp_rate),"в месяц",PAYROLL_SCOPE],
    ["Кадровый учёт, доплата за 1 сотрудника",rub(Math.max(0, S.hr_rate)),"в месяц",HR_SCOPE],
    ["НДС 5% или 7% (на УСН)",rub(S.add_vat_usn),"в месяц"],["НДС 10% или 20%",rub(S.add_vat),"в месяц"],["НДС 10% и 20% вместе",rub(S.add_vat_mix),"в месяц"],
@@ -1239,9 +1238,9 @@ function listData(){
    [`Стандартное ведение базы 1С: до ${S.c1_b1} документов в месяц, за каждую базу`,rub(S.c1_t1),"в месяц"],[`Стандартное ведение базы 1С: ${S.c1_b1+1}–${S.c1_b2} документов`,rub(S.c1_t2),"в месяц"],[`Стандартное ведение базы 1С: ${S.c1_b2+1}–${S.c1_b3} документов`,rub(S.c1_t3),"в месяц"],[`Стандартное ведение базы 1С: свыше ${S.c1_b3} документов`,rub(S.c1_t4),"в месяц"],["Заведение базы 1С (если базы нет), за каждую",rub(S.one_c),"разово"],["База 1С не нужна","0 ₽",""],["Вопросы и коммуникация в чате","бесплатно",""],["Что входит в стандартное ведение 1С: "+C1_LIST.join("; ")+". "+C1_NOTE,"",""]);
   for (const plan of Object.values(MG_PLANS)) {
     const services = MG.filter(service => plan.keys.includes(service[0]));
-    const total = services.reduce((sum, [, , rate]) => sum + S[rate], S.i_chat);
+    const total = services.reduce((sum, service) => sum + (service[0] === "app" && plan === MG_PLANS.control ? 0 : S[service[2]]), S.i_chat);
     const scope = services.map(([, label]) => label);
-    if (plan.team) scope.push(MG_TEAM[0] + " — включено");
+    if (plan.team) scope.push(MG_TEAM[0] + " — включено", "Доступ к приложению и боту НЕЙЛА — бесплатно");
     M.push([`${plan.name} — ${plan.detail}`, rub(total), "в месяц", scope]);
   }
   for (const [, label, rate] of MG_ADDONS) {
@@ -1319,7 +1318,7 @@ function buildSpec(){
     const acc = $("p_acc").value === "our";
     const accounting = acc ? accountingMonthly(c) : 0;
     const pack = calcPackage(planKey, accounting);
-    const rows = pack.items.map(([label, amount]) => R(label, "входит в пакет", null, `отдельно ${rub(amount)}`));
+    const rows = pack.items.map(([label, amount]) => R(label, "входит в пакет", null, label === MG.find(([key]) => key === "app")[1] && planKey === "control" ? "включено бесплатно" : `отдельно ${rub(amount)}`));
     rows.push(S.i_chat ? R("Вопросы и коммуникация в чате", "входит в пакет", null, `отдельно ${rub(S.i_chat)}`)
       : R("Вопросы и коммуникация в чате", "—", null, "бесплатно"));
     if (!acc) rows.push(R("Коммуникация с текущей бухгалтерией", "—", null, "бесплатно"));
@@ -1354,7 +1353,7 @@ function buildSpec(){
     }
     if($("sp_m").checked){
       const m=getMgmt();
-      const rows=m.lines.map(x=>R(x[0],"ежемесячно",x[1]));
+      const rows=m.lines.map(x=>x[0]===MG.find(([key])=>key==="app")[1] && m.plan===MG_PLANS.control ? R(x[0],"включено",null,"бесплатно") : R(x[0],"ежемесячно",x[1]));
       if (m.plan.team) rows.push(R(MG_TEAM[0], "ежемесячно", 0, "включено"));
       [["Вопросы и коммуникация в чате",S.i_chat,"бесплатно"]].forEach(x=>rows.push(x[1]===0?R(x[0],"—",null,x[2]):R(x[0],"ежемесячно",x[1])));
       rows.push(managementTotal(m.sum + S.i_chat));
