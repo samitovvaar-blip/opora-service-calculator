@@ -1364,13 +1364,20 @@ $("sp_print").onclick=()=>{try{window.print()}catch(e){$("sp_msg").textContent="
 $("sp_copy").onclick=()=>{if(SPEC)copyText(specText(SPEC),"sp_msg")};
 
 // вкладки
-document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
-  document.querySelectorAll(".tab").forEach(x=>{
-    x.classList.toggle("on",x===t);
-    x.setAttribute("aria-pressed",String(x===t));
-  });
-  ["buh","mgmt","neyla","pack","audit","list","spec","time"].forEach(k=>$("t-"+k).classList.toggle("hide",k!==t.dataset.t));
-});
+const serviceTabs = [...document.querySelectorAll(".tab[data-t]")];
+function showServiceTab(selected) {
+  for (const tab of serviceTabs) {
+    const active = tab.dataset.t === selected;
+    tab.classList.toggle("on", active);
+    tab.setAttribute("aria-pressed", String(active));
+    $("t-" + tab.dataset.t).classList.toggle("hide", !active);
+  }
+}
+for (const tab of serviceTabs) {
+  tab.addEventListener("click", () => showServiceTab(tab.dataset.t));
+}
+const requestedTab = new URLSearchParams(location.search).get("tab");
+showServiceTab(serviceTabs.some(tab => tab.dataset.t === requestedTab) ? requestedTab : "buh");
 document.addEventListener("input",e=>{if(!e.target.closest("#settings, #worklog-form"))renderAll()});
 
 // настройки
