@@ -272,6 +272,9 @@ td > details { margin: 0; }
 .document-template .document-status { grid-column: 1 / -1; min-height: 1.5em; }
 .document-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 .document-template button:disabled { opacity: .55; cursor: default; }
+.document-fields { margin: 14px 0; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: #fafbfd; }
+.document-fields summary { margin: 0 0 8px; color: var(--ink); }
+.document-fields input { background: #fff; }
 @media (max-width: 540px) {
   .document-template { grid-template-columns: minmax(0, 1fr); }
   .document-template button { justify-self: start; }
@@ -581,8 +584,42 @@ td > details { margin: 0; }
       </div>
       <div class="row">
         <div><label for="sp_date">Дата</label><input type="text" id="sp_date"></div>
-        <div><label for="sp_exec">Исполнитель</label><input type="text" id="sp_exec" value="ОПОРА"></div>
+        <div><label for="sp_exec">Исполнитель</label><input type="text" id="sp_exec" value="Самитова Арина Руслановна"></div>
       </div>
+      <details class="document-fields" open>
+        <summary>Данные клиента и документов</summary>
+        <div class="row">
+          <div><label for="sp_client_inn">ИНН клиента</label><input type="text" id="sp_client_inn" inputmode="numeric" placeholder="ИНН организации, ИП или физлица"></div>
+          <div><label for="sp_client_signer">Подписант клиента</label><input type="text" id="sp_client_signer" placeholder="И. О. Фамилия"></div>
+        </div>
+        <label for="sp_client_address">Адрес клиента</label><input type="text" id="sp_client_address">
+        <div class="row">
+          <div><label for="sp_client_phone">Телефон клиента</label><input type="text" id="sp_client_phone"></div>
+          <div><label for="sp_client_email">Электронная почта клиента</label><input type="text" id="sp_client_email"></div>
+        </div>
+        <label for="sp_client_details">Дополнительные данные или банковские реквизиты клиента</label><input type="text" id="sp_client_details">
+        <div class="row">
+          <div><label for="sp_spec_no">Спецификация №</label><input type="text" id="sp_spec_no" value="1"></div>
+          <div><label for="sp_service_period">Период услуг</label><input type="text" id="sp_service_period" placeholder="Например, ноябрь 2026 года"></div>
+        </div>
+        <label for="sp_service_name">Наименование услуги для счёта и акта</label>
+        <input type="text" id="sp_service_name" list="sp_service_names" value="Бухгалтерские услуги 1 месяц">
+        <datalist id="sp_service_names"><option value="Бухгалтерские услуги 1 месяц"><option value="Бухгалтерское консультирование"></datalist>
+        <div class="row">
+          <div><label for="sp_invoice_no">Счёт №</label><input type="text" id="sp_invoice_no"></div>
+          <div><label for="sp_invoice_date">Дата счёта</label><input type="text" id="sp_invoice_date"></div>
+        </div>
+        <div class="row">
+          <div><label for="sp_act_no">Акт №</label><input type="text" id="sp_act_no"></div>
+          <div><label for="sp_act_date">Дата акта</label><input type="text" id="sp_act_date"></div>
+        </div>
+        <label for="sp_payment_terms">Порядок оплаты</label><input type="text" id="sp_payment_terms" value="100% предоплата в течение 3 рабочих дней с даты выставления счёта">
+        <div class="row">
+          <div><label for="sp_service_term">Срок оказания услуг</label><input type="text" id="sp_service_term" placeholder="Согласно выбранному тарифу или спецификации"></div>
+          <div><label for="sp_payment_due">Срок оплаты в счёте</label><input type="text" id="sp_payment_due" value="3 рабочих дня"></div>
+        </div>
+        <label for="sp_service_result">Результат услуг</label><input type="text" id="sp_service_result" placeholder="Будет сформирован из выбранных услуг, если оставить пустым">
+      </details>
       <label>Пакет</label>
       <select id="sp_pk"><option value="none">Без пакета (услуги по отдельности)</option><option value="1">Пакет «Опора Цифры»</option><option value="2">Пакет «Опора Контроль»</option></select>
       <div id="sp_sep">
@@ -603,12 +640,15 @@ td > details { margin: 0; }
 
     <section class="card document-tools noprint" aria-labelledby="document-tools-title">
       <h2 id="document-tools-title">Документы по шаблонам</h2>
-      <p class="note">Вставьте метки в нужные места документа Word и загрузите файл .docx. Калькулятор подставит данные из полей выше. Шаблоны сохраняются в этом браузере.</p>
+      <p class="note">Загрузите подготовленный шаблон Word .docx. Калькулятор подставит данные клиента, номера документов, выбранные услуги и итоговую сумму из спецификации. Шаблоны сохраняются в этом браузере.</p>
       <div class="document-markers">
         <code>{{клиент}}</code>
+        <code>{{инн_клиента}}</code>
         <code>{{номер_договора}}</code>
-        <code>{{дата}}</code>
-        <code>{{исполнитель}}</code>
+        <code>{{номер_спецификации}}</code>
+        <code>{{наименование_услуги}}</code>
+        <code>{{сумма}}</code>
+        <code>{{сумма_прописью}}</code>
       </div>
       <div class="document-template" data-template="contract">
         <h3>Договор</h3>
@@ -1299,7 +1339,11 @@ $("l_copy").onclick=()=>copyText(listData().map(([title, entries])=>title.toUppe
 }).join("\n")).join("\n\n"),"l_msg");
 
 // спецификация
-const d0=new Date();$("sp_date").value=String(d0.getDate()).padStart(2,"0")+"."+String(d0.getMonth()+1).padStart(2,"0")+"."+d0.getFullYear();
+const d0=new Date();
+const documentDate=String(d0.getDate()).padStart(2,"0")+"."+String(d0.getMonth()+1).padStart(2,"0")+"."+d0.getFullYear();
+$("sp_date").value=documentDate;
+$("sp_invoice_date").value=documentDate;
+$("sp_act_date").value=documentDate;
 let SPEC=null;
 function buildSpec(){
   const pk=$("sp_pk").value, c=calcBuh();
@@ -1487,13 +1531,97 @@ buildSettings();renderAll();
 <script>
 (() => {
   const docxMime = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-  const fields = {
-    "клиент": "sp_client",
-    "номер_договора": "sp_no",
-    "дата": "sp_date",
-    "исполнитель": "sp_exec"
+  const getValue = id => document.getElementById(id)?.value.trim() || "";
+  const documentTotals = () => {
+    if (!SPEC) SPEC = buildSpec();
+    const withTax = value => SPEC.rate ? grossUp(value, SPEC.rate) : value;
+    const payable = withTax(SPEC.monthly) + withTax(SPEC.once) + SPEC.fixed;
+    let beforeDiscount = payable;
+    let discount = 0;
+    for (const section of SPEC.secs) {
+      for (const row of section.rows) {
+        if (row.n === "Общая стоимость до скидки") beforeDiscount = withTax(row.v);
+        if (row.n.startsWith("Скидка за пакет")) discount = Math.abs(withTax(row.v));
+      }
+    }
+    return { payable: Math.round(payable), beforeDiscount: Math.round(beforeDiscount), discount: Math.round(discount) };
   };
-  const marker = /\{\{\s*(клиент|номер_договора|дата|исполнитель)\s*\}\}/gu;
+  const plural = (number, one, few, many) => {
+    const n = Math.abs(number) % 100, last = n % 10;
+    if (n > 10 && n < 20) return many;
+    if (last > 1 && last < 5) return few;
+    if (last === 1) return one;
+    return many;
+  };
+  const numberWords = number => {
+    const ones = [["","один","два","три","четыре","пять","шесть","семь","восемь","девять"],["","одна","две","три","четыре","пять","шесть","семь","восемь","девять"]];
+    const teens = ["десять","одиннадцать","двенадцать","тринадцать","четырнадцать","пятнадцать","шестнадцать","семнадцать","восемнадцать","девятнадцать"];
+    const tens = ["","","двадцать","тридцать","сорок","пятьдесят","шестьдесят","семьдесят","восемьдесят","девяносто"];
+    const hundreds = ["","сто","двести","триста","четыреста","пятьсот","шестьсот","семьсот","восемьсот","девятьсот"];
+    const groups = [["","","",0],["тысяча","тысячи","тысяч",1],["миллион","миллиона","миллионов",0],["миллиард","миллиарда","миллиардов",0]];
+    let value = Math.max(0, Math.floor(number));
+    if (!value) return "ноль";
+    const result = [];
+    for (let group = 0; value > 0; group += 1) {
+      const part = value % 1000;
+      value = Math.floor(value / 1000);
+      if (!part) continue;
+      const words = [hundreds[Math.floor(part / 100)]];
+      const rest = part % 100;
+      if (rest >= 10 && rest < 20) words.push(teens[rest - 10]);
+      else {
+        words.push(tens[Math.floor(rest / 10)]);
+        words.push(ones[groups[group]?.[3] || 0][rest % 10]);
+      }
+      if (group > 0 && groups[group]) words.push(plural(part, groups[group][0], groups[group][1], groups[group][2]));
+      result.unshift(words.filter(Boolean).join(" "));
+    }
+    return result.join(" ");
+  };
+  const amountWords = amount => {
+    const value = Math.round(amount);
+    const words = numberWords(value);
+    return words.charAt(0).toUpperCase() + words.slice(1) + " " + plural(value, "рубль", "рубля", "рублей") + " 00 копеек";
+  };
+  const serviceList = () => {
+    if (!SPEC) SPEC = buildSpec();
+    const names = SPEC.secs.flatMap(section => section.rows.filter(row => !row.subtotal && row.v !== null).map(row => row.n));
+    return [...new Set(names)].join("; ") || getValue("sp_service_name");
+  };
+  const resultText = () => getValue("sp_service_result") || serviceList();
+  const fields = {
+    "клиент": { id: "sp_client" },
+    "инн_клиента": { id: "sp_client_inn" },
+    "адрес_клиента": { id: "sp_client_address" },
+    "телефон_клиента": { id: "sp_client_phone", optional: true },
+    "email_клиента": { id: "sp_client_email", optional: true },
+    "реквизиты_клиента": { id: "sp_client_details", optional: true },
+    "данные_клиента": { get: () => [getValue("sp_client_address"), getValue("sp_client_details")].filter(Boolean).join(", ") },
+    "подписант_клиента": { id: "sp_client_signer" },
+    "номер_договора": { id: "sp_no" },
+    "дата": { id: "sp_date" },
+    "дата_договора": { id: "sp_date" },
+    "исполнитель": { id: "sp_exec" },
+    "номер_спецификации": { id: "sp_spec_no" },
+    "период_услуг": { id: "sp_service_period" },
+    "наименование_услуги": { id: "sp_service_name" },
+    "номер_счета": { id: "sp_invoice_no" },
+    "дата_счета": { id: "sp_invoice_date" },
+    "номер_акта": { id: "sp_act_no" },
+    "дата_акта": { id: "sp_act_date" },
+    "срок_оплаты": { id: "sp_payment_due" },
+    "порядок_оплаты": { id: "sp_payment_terms" },
+    "срок_оказания": { id: "sp_service_term", optional: true },
+    "результат_услуг": { get: resultText },
+    "перечень_услуг": { get: serviceList },
+    "сумма": { get: () => documentTotals().payable.toLocaleString("ru-RU") },
+    "сумма_прописью": { get: () => amountWords(documentTotals().payable) },
+    "стоимость_до_скидки": { get: () => documentTotals().beforeDiscount.toLocaleString("ru-RU") },
+    "скидка": { get: () => documentTotals().discount ? documentTotals().discount.toLocaleString("ru-RU") + " руб." : "0 руб." },
+    "итоговая_стоимость": { get: () => documentTotals().payable.toLocaleString("ru-RU") }
+  };
+  const fieldNames = Object.keys(fields).map(name => name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
+  const marker = new RegExp("\\{\\{\\s*(" + fieldNames + ")\\s*\\}\\}", "gu");
   const wordParts = /^word\/(?:document|header\d+|footer\d+|footnotes|endnotes)\.xml$/;
   const records = new Map();
   let archiveLibrary;
@@ -1658,9 +1786,7 @@ buildSettings();renderAll();
         const { found } = await openWord(file);
         const record = { file, name: file.name, found };
         records.set(key, record);
-        result = shownTemplate(record);
-        const missing = Object.keys(fields).filter(field => !found.includes(field));
-        if (missing.length) result += ". Меток нет: " + missing.map(field => "{{" + field + "}}").join(", ");
+        result = shownTemplate(record) + ". Найдено полей: " + found.length + ".";
         try {
           await useStorage("readwrite", store => store.put(record, key));
         } catch {
@@ -1697,14 +1823,16 @@ buildSettings();renderAll();
     button.addEventListener("click", async () => {
       const record = records.get(key);
       if (!record || busy) return;
-      const values = Object.fromEntries(Object.entries(fields).map(([field, id]) => (
-        [field, document.getElementById(id).value.trim()]
+      SPEC = buildSpec();
+      renderSpec(SPEC);
+      const values = Object.fromEntries(Object.entries(fields).map(([field, config]) => (
+        [field, config.get ? config.get() : getValue(config.id)]
       )));
-      const empty = record.found.find(field => !values[field]);
+      const empty = record.found.find(field => !values[field] && !fields[field]?.optional);
       if (empty) {
-        const field = document.getElementById(fields[empty]);
-        show("Заполните поле «" + field.labels[0].textContent + "».");
-        field.focus();
+        const field = fields[empty]?.id ? document.getElementById(fields[empty].id) : null;
+        show(field ? "Заполните поле «" + field.labels[0].textContent + "»." : "Не удалось заполнить поле {{" + empty + "}}.");
+        field?.focus();
         return;
       }
 
@@ -1715,7 +1843,8 @@ buildSettings();renderAll();
       try {
         const { archive } = await openWord(record.file, values);
         const blob = await archive.generateAsync({ type: "blob", mimeType: docxMime, compression: "DEFLATE" });
-        const suffix = (values["номер_договора"] || values["клиент"]).replace(/[\\/:*?"<>|]+/g, "-").slice(0, 80);
+        const documentNumber = key === "invoice" ? values["номер_счета"] : key === "act" ? values["номер_акта"] : values["номер_договора"];
+        const suffix = (documentNumber || values["клиент"]).replace(/[\\/:*?"<>|]+/g, "-").slice(0, 80);
         const name = row.querySelector("h3").textContent + (suffix ? " — " + suffix : "") + ".docx";
         downloadDocument(blob, name);
         result = "Документ скачан. " + shownTemplate(record);
